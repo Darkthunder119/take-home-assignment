@@ -1,0 +1,22 @@
+# Exported from Render on 2025-11-19T23:47:01Z
+version: "1"
+projects:
+- name: My project
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: decoda
+      runtime: python
+      repo: https://github.com/Darkthunder119/take-home-assignment
+      plan: free
+      envVars:
+      - key: PORT
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      region: oregon
+      buildCommand: pip install -r requirements.txt
+      startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+      autoDeployTrigger: commit
+      rootDir: backend
