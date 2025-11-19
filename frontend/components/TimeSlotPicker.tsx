@@ -27,7 +27,13 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot }: TimeSlotPi
         <div key={date} className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            {format(parseISO(dateSlots[0].start_time), 'EEEE, MMMM d, yyyy')}
+                {new Date(dateSlots[0].start_time).toLocaleDateString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                  timeZone: "UTC",
+                })}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {dateSlots.map((slot) => (
@@ -43,9 +49,14 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot }: TimeSlotPi
                 }`}
               >
                 <Clock className="w-4 h-4" />
-                <span className="text-sm font-semibold">
-                  {format(new Date(slot.start_time), 'h:mm a')}
-                </span>
+                    <span className="text-sm font-semibold">
+                      {new Date(slot.start_time).toLocaleTimeString(undefined, {
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                        timeZone: "UTC",
+                      })}
+                    </span>
               </Button>
             ))}
           </div>
