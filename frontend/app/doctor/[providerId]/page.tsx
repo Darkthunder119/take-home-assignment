@@ -10,9 +10,6 @@ import { AppointmentCard } from "@/components/AppointmentCard";
 import { DoctorCalendar } from "@/components/DoctorCalendar";
 import { format, addDays } from "date-fns";
 
-// TODO: Implement doctor schedule view
-// Requirements:
-// 1. ✅ Fetch appointments for this provider using API
 // 2. TODO: Display in calendar format (week or month view) - enhance DoctorCalendar component
 // 3. ✅ Show appointment details: patient name, time, reason
 // 4. ✅ Add loading and error states

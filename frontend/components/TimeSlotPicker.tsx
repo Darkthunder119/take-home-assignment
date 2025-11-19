@@ -13,8 +13,11 @@ interface TimeSlotPickerProps {
 }
 
 export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: TimeSlotPickerProps) {
+  // Only show available slots — hide already-taken slots entirely from the UI
+  const availableSlots = slots.filter((s) => s.available);
+
   // Group slots by date (yyyy-MM-dd)
-  const slotsByDate = slots.reduce((acc, slot) => {
+  const slotsByDate = availableSlots.reduce((acc, slot) => {
     const date = format(parseISO(slot.start_time), "yyyy-MM-dd");
     if (!acc[date]) acc[date] = [];
     acc[date].push(slot);
@@ -89,7 +92,6 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
               <Button
                 key={slot.id}
                 variant={selectedSlot?.id === slot.id ? "default" : "outline"}
-                disabled={!slot.available}
                 onClick={() => onSelectSlot(slot)}
                 className={`h-auto py-3 px-4 flex flex-col items-start justify-center gap-1 rounded-xl transition-all ${
                   selectedSlot?.id === slot.id ? "shadow-lg shadow-primary/30" : "hover:border-primary/40"
