@@ -1,9 +1,49 @@
 const API_URL = "http://localhost:8000/api";
 
-export async function getProviders(): Promise<Provider[]> {
-  const response = await fetch(`${API_URL}/providers`);
-  if (!response.ok) throw new Error("Failed to fetch providers");
+async function apiFetch(url: string, options: RequestInit = {}) {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    try {
+      const errorData = await response.json();
+
+      // Normalize common FastAPI/Pydantic error shapes so callers get a
+      // readable string instead of `[object Object]`.
+      let message = `HTTP error! status: ${response.status}`;
+
+      if (errorData) {
+        if (typeof errorData.detail === "string") {
+          message = errorData.detail;
+        } else if (Array.isArray(errorData.detail)) {
+          // Pydantic validation errors come as an array of { loc, msg, ... }
+          const parts = errorData.detail.map((d: any) => {
+            if (d && typeof d === "object") {
+              if (d.msg) return d.msg;
+              // sometimes ctx.error contains nested info
+              if (d.input) return `${d.msg || JSON.stringify(d)}`;
+              return JSON.stringify(d);
+            }
+            return String(d);
+          });
+          message = parts.join("; ");
+        } else if (typeof errorData.detail === "object") {
+          message = JSON.stringify(errorData.detail);
+        }
+      }
+
+      throw new Error(message);
+    } catch (e) {
+      // If parsing JSON fails, throw a generic error
+      if (e instanceof Error) {
+        throw new Error(e.message || `HTTP error! status: ${response.status}`);
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
   return response.json();
+}
+
+export async function getProviders(): Promise<Provider[]> {
+  return apiFetch(`${API_URL}/providers`);
 }
 
 export async function getAvailability(
@@ -12,9 +52,7 @@ export async function getAvailability(
   endDate: string
 ): Promise<{ provider: Provider; slots: TimeSlot[] }> {
   const url = `${API_URL}/availability?provider_id=${providerId}&start_date=${startDate}&end_date=${endDate}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Failed to fetch availability");
-  return response.json();
+  return apiFetch(url);
 }
 
 export async function createAppointment(
@@ -23,7 +61,7 @@ export async function createAppointment(
   patient: PatientInfo,
   reason: string
 ): Promise<Appointment> {
-  const response = await fetch(`${API_URL}/appointments`, {
+  return apiFetch(`${API_URL}/appointments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -33,11 +71,15 @@ export async function createAppointment(
       reason,
     }),
   });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to create appointment");
-  }
-  return response.json();
+}
+
+export async function getProviderAppointments(
+  providerId: string,
+  startDate: string,
+  endDate: string
+): Promise<any> {
+  const url = `${API_URL}/providers/${providerId}/appointments?start_date=${startDate}&end_date=${endDate}`;
+  return apiFetch(url);
 }
 
 
@@ -76,15 +118,4 @@ export interface Appointment {
   created_at: string;
 }
 
-export async function getProviderAppointments(
-  providerId: string,
-  startDate: string,
-  endDate: string
-): Promise<any> {
-  const response = await fetch(
-    `${API_URL}/providers/${providerId}/appointments?start_date=${startDate}&end_date=${endDate}`
-  );
-  if (!response.ok) throw new Error("Failed to fetch appointments");
-  return response.json();
 
-}
