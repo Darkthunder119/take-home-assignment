@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMedicalProvider } from "@/context/MedicalProviderContext";
 import {
   Calendar as CalendarIcon,
   Stethoscope,
@@ -7,6 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function Header() {
+  const { provider } = useMedicalProvider();
+  const doctorHref = provider ? `/doctor/${provider.id}` : "/doctor/provider-1";
+
   return (
     <header className="border-b bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
@@ -16,9 +22,7 @@ export function Header() {
               <CalendarIcon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">
-                Decoda Appointments
-              </h1>
+              <h1 className="text-xl font-bold text-foreground">Decoda Appointments</h1>
             </div>
           </Link>
           <nav className="flex items-center gap-2">
@@ -29,10 +33,7 @@ export function Header() {
               </Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link
-                href="/doctor/provider-1"
-                className="flex items-center gap-2"
-              >
+              <Link href={doctorHref} className="flex items-center gap-2">
                 <Stethoscope className="w-4 h-4" />
                 <span className="hidden sm:inline">Doctor Schedule</span>
               </Link>
