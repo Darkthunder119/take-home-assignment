@@ -138,7 +138,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <Card className="p-6 shadow-[var(--shadow-card)]">
+          <Card className="p-6 shadow-[var(--shadow-card)] md:min-h-[60vh]">
             {selectedProvider ? (
               <>
                 {loadingSlots ? (
@@ -147,16 +147,14 @@ export default function HomePage() {
                   </div>
                 ) : availabilityData?.slots && availabilityData.slots.length > 0 ? (
                   <>
-                    {/* Make the times area scrollable so the date strip and summary can be sticky */}
-                    <div className="relative max-h-[52vh] overflow-y-auto">
-                      <div className="p-1">
-                        <TimeSlotPicker
-                          slots={availabilityData.slots}
-                          selectedSlot={selectedSlot}
-                          onSelectSlot={handleSlotSelect}
-                          onBook={() => setDialogOpen(true)}
-                        />
-                      </div>
+                    {/* Expanded times area (no inner scrollbar) so the date strip remains visible with times below */}
+                    <div className="p-1">
+                      <TimeSlotPicker
+                        slots={availabilityData.slots}
+                        selectedSlot={selectedSlot}
+                        onSelectSlot={handleSlotSelect}
+                        onBook={() => setDialogOpen(true)}
+                      />
                     </div>
 
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
