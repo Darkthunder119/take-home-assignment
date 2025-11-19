@@ -11,7 +11,6 @@ import { DoctorCalendar } from "@/components/DoctorCalendar";
 import { format, addDays } from "date-fns";
 
 // TODO: 4. ✅ Add loading and error states
-// TODO: 5. TODO: Make responsive for mobile - add better mobile layout
 
 export default function DoctorSchedulePage({
   params,
@@ -76,6 +75,8 @@ export default function DoctorSchedulePage({
               <DoctorCalendar
                 providerId={providerId}
                 appointments={appointments}
+                isLoading={isLoading}
+                error={error}
               />
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -40,9 +40,11 @@ interface Appointment {
 interface DoctorCalendarProps {
   providerId: string;
   appointments: Appointment[];
+  isLoading?: boolean;
+  error?: unknown;
 }
 
-export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps) {
+export function DoctorCalendar({ providerId, appointments, isLoading, error }: DoctorCalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [openAppointment, setOpenAppointment] = useState<Appointment | null>(null);
@@ -74,15 +76,37 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
   const days = viewMode === "month" ? getMonthGrid(currentDate) : getWeekGrid(currentDate);
   const isCurrentMonth = (d: Date) => isSameMonth(d, currentDate);
 
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   function goToday() {
     setCurrentDate(new Date());
   }
   function goPrev() {
+    // on mobile prefer week navigation regardless of viewMode
+    if (isMobile) {
+      setCurrentDate((prev) => subWeeks(prev, 1));
+      return;
+    }
     setCurrentDate((prev) => (viewMode === "month" ? subMonths(prev, 1) : subWeeks(prev, 1)));
   }
   function goNext() {
+    if (isMobile) {
+      setCurrentDate((prev) => addWeeks(prev, 1));
+      return;
+    }
     setCurrentDate((prev) => (viewMode === "month" ? addMonths(prev, 1) : addWeeks(prev, 1)));
   }
+
+  const prevTitle = isMobile ? "Previous week" : viewMode === "month" ? "Previous month" : "Previous week";
+  const nextTitle = isMobile ? "Next week" : viewMode === "month" ? "Next month" : "Next week";
+  const todayTitle = "Go to today";
 
   const tagColors = [
     "bg-blue-100 text-blue-800",
@@ -91,6 +115,38 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
     "bg-pink-100 text-pink-800",
     "bg-yellow-100 text-yellow-800",
   ];
+
+  // Loading state: show skeleton placeholders
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse">
+          <div className="h-6 w-48 bg-gray-200 rounded mb-4" />
+
+          <div className="hidden md:grid grid-cols-7 gap-2">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="h-24 bg-gray-100 rounded" />
+            ))}
+          </div>
+
+          <div className="md:hidden space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-20 bg-gray-100 rounded" />
+            ))}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Error state: show message
+  if (error) {
+    return (
+      <Card className="p-6 border-destructive">
+        <p className="text-destructive">Error loading calendar. Please try again.</p>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -116,13 +172,13 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
           </button>
           {/* navigation - keep for mobile and desktop */}
           <div className="flex items-center gap-2">
-            <button onClick={goPrev} className="px-2 py-1 rounded border" aria-label="Previous">
+            <button onClick={goPrev} className="px-2 py-1 rounded border" aria-label="Previous" title={prevTitle}>
               ‹
             </button>
-            <button onClick={goToday} className="px-2 py-1 rounded border" aria-label="Today">
+            <button onClick={goToday} className="px-2 py-1 rounded border" aria-label="Today" title={todayTitle}>
               Today
             </button>
-            <button onClick={goNext} className="px-2 py-1 rounded border" aria-label="Next">
+            <button onClick={goNext} className="px-2 py-1 rounded border" aria-label="Next" title={nextTitle}>
               ›
             </button>
           </div>
@@ -213,7 +269,7 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
       {/* Appointment details dialog */}
       <Dialog open={!!openAppointment} onOpenChange={(open) => { if (!open) setOpenAppointment(null); }}>
         {openAppointment && (
-          <DialogContent>
+          <DialogContent className="rounded-lg shadow-lg">
             <DialogHeader>
               <DialogTitle>Appointment Details</DialogTitle>
               <DialogDescription>
