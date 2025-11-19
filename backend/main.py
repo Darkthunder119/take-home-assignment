@@ -18,7 +18,7 @@ from models import (
 )
 from helpers import (
     get_provider_by_id,
-    _get_providers,
+    get_providers,
     check_slot_availability,
     create_appointment,
     get_booked_slots
@@ -49,10 +49,10 @@ async def root():
     }
 
 
-@app.get("/providers", response_model=List[Provider])
-def get_providers(db: Session = Depends(get_db)):
+@app.get("/api/providers", response_model=List[Provider])
+def api_get_providers(db: Session = Depends(get_db)):
     """Get all providers (uses helper implementation)."""
-    providers = _get_providers(db)
+    providers = get_providers(db)
     # Convert SQLAlchemy models (ORM objects) to Pydantic models in one shot
     provider_list_adapter = TypeAdapter(List[Provider])
     return provider_list_adapter.validate_python(providers, from_attributes=True)
@@ -88,8 +88,8 @@ async def get_availability(
     if end <= start:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
     
-    # Get booked slots
-    booked_slots = get_booked_slots(provider_id, start_date, end_date)
+    # Get booked slots (pass parsed datetimes so we don't re-parse inside helper)
+    booked_slots = get_booked_slots(provider_id, start, end)
     
     # Generate time slots
     slots = []
@@ -189,15 +189,16 @@ async def book_appointment(request: CreateAppointmentRequest):
     
     # Save appointment (mock)
     created = create_appointment(appointment_data)
-    
-    # Return formatted response
+
+    # `create_appointment` now returns a Pydantic `Appointment` model.
+    # Build the response using that model but override provider & patient
     return Appointment(
-        id=created["id"],
-        reference_number=created["reference_number"],
-        status=created["status"],
+        id=created.id,
+        reference_number=created.reference_number,
+        status=created.status,
         slot=AppointmentSlot(
-            start_time=created["start_time"],
-            end_time=created["end_time"]
+            start_time=created.slot.start_time,
+            end_time=created.slot.end_time
         ),
         provider=AppointmentProvider(
             id=provider.id,
@@ -205,8 +206,8 @@ async def book_appointment(request: CreateAppointmentRequest):
             specialty=provider.specialty
         ),
         patient=request.patient,
-        reason=created["reason"],
-        created_at=created["created_at"]
+        reason=created.reason,
+        created_at=created.created_at
     )
 
 

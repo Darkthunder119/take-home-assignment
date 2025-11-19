@@ -1,6 +1,6 @@
 import { TimeSlot } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Calendar, Clock } from "lucide-react";
 
 interface TimeSlotPickerProps {
@@ -12,7 +12,10 @@ interface TimeSlotPickerProps {
 export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot }: TimeSlotPickerProps) {
   // Group slots by date
   const slotsByDate = slots.reduce((acc, slot) => {
-    const date = format(new Date(slot.start_time), 'yyyy-MM-dd');
+    // Use parseISO to correctly interpret the ISO timestamp and format
+    // the local date. This fixes the problem with new Date(dateString)
+    // which can shift the date because of timezone offsets.
+    const date = format(parseISO(slot.start_time), 'yyyy-MM-dd');
     if (!acc[date]) acc[date] = [];
     acc[date].push(slot);
     return acc;
@@ -24,7 +27,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot }: TimeSlotPi
         <div key={date} className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Calendar className="w-4 h-4 text-primary" />
-            {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+            {format(parseISO(dateSlots[0].start_time), 'EEEE, MMMM d, yyyy')}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {dateSlots.map((slot) => (

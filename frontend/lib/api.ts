@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_URL = "http://localhost:8000/api";
 
 export async function getProviders(): Promise<Provider[]> {
   const response = await fetch(`${API_URL}/providers`);
@@ -6,16 +6,16 @@ export async function getProviders(): Promise<Provider[]> {
   return response.json();
 }
 
-// export async function getAvailability(
-//   providerId: string,
-//   startDate: string,
-//   endDate: string
-// ): Promise<{ provider: Provider; slots: TimeSlot[] }> {
-//   const url = `${API_URL}/availability?provider_id=${providerId}&start_date=${startDate}&end_date=${endDate}`;
-//   const response = await fetch(url);
-//   if (!response.ok) throw new Error("Failed to fetch availability");
-//   return response.json();
-// }
+export async function getAvailability(
+  providerId: string,
+  startDate: string,
+  endDate: string
+): Promise<{ provider: Provider; slots: TimeSlot[] }> {
+  const url = `${API_URL}/availability?provider_id=${providerId}&start_date=${startDate}&end_date=${endDate}`;
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Failed to fetch availability");
+  return response.json();
+}
 
 // export async function createAppointment(
 //   slotId: string,
@@ -76,70 +76,70 @@ export interface Appointment {
   created_at: string;
 }
 
-export async function getAvailability(
-  providerId: string,
-  startDate: string,
-  endDate: string
-): Promise<{ provider: Provider; slots: TimeSlot[] }> {
-  console.log("[STUB] getAvailability called with:", {
-    providerId,
-    startDate,
-    endDate,
-  });
+// export async function getAvailability(
+//   providerId: string,
+//   startDate: string,
+//   endDate: string
+// ): Promise<{ provider: Provider; slots: TimeSlot[] }> {
+//   console.log("[STUB] getAvailability called with:", {
+//     providerId,
+//     startDate,
+//     endDate,
+//   });
 
-  const providers = await getProviders();
-  const provider = providers.find((p) => p.id === providerId);
+//   const providers = await getProviders();
+//   const provider = providers.find((p) => p.id === providerId);
 
-  if (!provider) {
-    throw new Error("Provider not found");
-  }
+//   if (!provider) {
+//     throw new Error("Provider not found");
+//   }
 
-  const slots: TimeSlot[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+//   const slots: TimeSlot[] = [];
+//   const start = new Date(startDate);
+//   const end = new Date(endDate);
 
-  for (
-    let date = new Date(start);
-    date <= end;
-    date.setDate(date.getDate() + 1)
-  ) {
-    const dayOfWeek = date.getDay();
+//   for (
+//     let date = new Date(start);
+//     date <= end;
+//     date.setDate(date.getDate() + 1)
+//   ) {
+//     const dayOfWeek = date.getDay();
 
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      for (let hour = 9; hour < 17; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
-          if (hour === 12) continue;
+//     if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+//       for (let hour = 9; hour < 17; hour++) {
+//         for (let minute = 0; minute < 60; minute += 30) {
+//           if (hour === 12) continue;
 
-          const slotStart = new Date(date);
-          slotStart.setHours(hour, minute, 0, 0);
+//           const slotStart = new Date(date);
+//           slotStart.setHours(hour, minute, 0, 0);
 
-          const slotEnd = new Date(slotStart);
-          slotEnd.setMinutes(slotEnd.getMinutes() + 30);
+//           const slotEnd = new Date(slotStart);
+//           slotEnd.setMinutes(slotEnd.getMinutes() + 30);
 
-          if (slotStart > new Date()) {
-            slots.push({
-              id: `slot-${providerId}-${slotStart.getTime()}`,
-              start_time: slotStart.toISOString(),
-              end_time: slotEnd.toISOString(),
-              available: true,
-            });
-          }
-        }
-      }
-    }
-  }
+//           if (slotStart > new Date()) {
+//             slots.push({
+//               id: `slot-${providerId}-${slotStart.getTime()}`,
+//               start_time: slotStart.toISOString(),
+//               end_time: slotEnd.toISOString(),
+//               available: true,
+//             });
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  console.log(`[STUB] Returning ${slots.length} available slots`);
+//   console.log(`[STUB] Returning ${slots.length} available slots`);
 
-  return {
-    provider: {
-      id: provider.id,
-      name: provider.name,
-      specialty: provider.specialty,
-    },
-    slots,
-  };
-}
+//   return {
+//     provider: {
+//       id: provider.id,
+//       name: provider.name,
+//       specialty: provider.specialty,
+//     },
+//     slots,
+//   };
+// }
 
 export async function createAppointment(
   slotId: string,
