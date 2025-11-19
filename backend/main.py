@@ -34,7 +34,7 @@ app.add_middleware(
     CORSMiddleware,
     # Allow the common local dev origins. Add more if you serve the frontend
     # from a different host (127.0.0.1) or port.
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", 'https://decoda-booking.vercel.app/'],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -293,6 +293,6 @@ async def get_provider_appointments(
 if __name__ == "__main__":
     import uvicorn
     import os
-    
+
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
