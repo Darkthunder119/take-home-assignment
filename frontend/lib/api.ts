@@ -1,10 +1,4 @@
-// TODO: Implement database connection and actual API endpoints
-// Currently using stub implementations that return mock data
-
-// OPTION 1: Use the provided FastAPI backend (see backend/ folder)
-// Uncomment these implementations and comment out the stubs below:
-/*
-const API_URL = "http://localhost:8000/api";
+const API_URL = "http://localhost:8000";
 
 export async function getProviders(): Promise<Provider[]> {
   const response = await fetch(`${API_URL}/providers`);
@@ -12,43 +6,40 @@ export async function getProviders(): Promise<Provider[]> {
   return response.json();
 }
 
-export async function getAvailability(
-  providerId: string,
-  startDate: string,
-  endDate: string
-): Promise<{ provider: Provider; slots: TimeSlot[] }> {
-  const url = `${API_URL}/availability?provider_id=${providerId}&start_date=${startDate}&end_date=${endDate}`;
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Failed to fetch availability");
-  return response.json();
-}
+// export async function getAvailability(
+//   providerId: string,
+//   startDate: string,
+//   endDate: string
+// ): Promise<{ provider: Provider; slots: TimeSlot[] }> {
+//   const url = `${API_URL}/availability?provider_id=${providerId}&start_date=${startDate}&end_date=${endDate}`;
+//   const response = await fetch(url);
+//   if (!response.ok) throw new Error("Failed to fetch availability");
+//   return response.json();
+// }
 
-export async function createAppointment(
-  slotId: string,
-  providerId: string,
-  patient: PatientInfo,
-  reason: string
-): Promise<Appointment> {
-  const response = await fetch(`${API_URL}/appointments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      slot_id: slotId,
-      provider_id: providerId,
-      patient,
-      reason,
-    }),
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || "Failed to create appointment");
-  }
-  return response.json();
-}
-*/
+// export async function createAppointment(
+//   slotId: string,
+//   providerId: string,
+//   patient: PatientInfo,
+//   reason: string
+// ): Promise<Appointment> {
+//   const response = await fetch(`${API_URL}/appointments`, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({
+//       slot_id: slotId,
+//       provider_id: providerId,
+//       patient,
+//       reason,
+//     }),
+//   });
+//   if (!response.ok) {
+//     const error = await response.json();
+//     throw new Error(error.detail || "Failed to create appointment");
+//   }
+//   return response.json();
+// }
 
-// OPTION 2: Build your own backend
-// Replace the stubs below with calls to your own API
 
 export interface Provider {
   id: string;
@@ -83,25 +74,6 @@ export interface Appointment {
   patient: PatientInfo;
   reason: string;
   created_at: string;
-}
-
-export async function getProviders(): Promise<Provider[]> {
-  console.log("[STUB] getProviders called - returning mock data");
-
-  return [
-    {
-      id: "provider-1",
-      name: "Dr. Sarah Chen",
-      specialty: "Family Medicine",
-      bio: "Dr. Chen has over 15 years of experience in family medicine and preventive care.",
-    },
-    {
-      id: "provider-2",
-      name: "Dr. James Kumar",
-      specialty: "Internal Medicine",
-      bio: "Dr. Kumar specializes in internal medicine with a focus on chronic disease management.",
-    },
-  ];
 }
 
 export async function getAvailability(

@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { getProviderAppointments, getProviders } from "@/lib/api";
@@ -20,8 +21,9 @@ import { format, addDays } from "date-fns";
 export default function DoctorSchedulePage({
   params,
 }: {
-  params: { providerId: string };
+  params: Promise<{ providerId: string }>;
 }) {
+  const { providerId } = use(params);
   const startDate = format(new Date(), "yyyy-MM-dd");
   const endDate = format(addDays(new Date(), 30), "yyyy-MM-dd");
 
@@ -35,12 +37,12 @@ export default function DoctorSchedulePage({
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["provider-appointments", params.providerId, startDate, endDate],
+    queryKey: ["provider-appointments", providerId, startDate, endDate],
     queryFn: () =>
-      getProviderAppointments(params.providerId, startDate, endDate),
+      getProviderAppointments(providerId, startDate, endDate),
   });
 
-  const provider = providers?.find((p) => p.id === params.providerId);
+  const provider = providers?.find((p) => p.id === providerId);
   const appointments = appointmentsData?.appointments || [];
 
   return (
@@ -78,7 +80,7 @@ export default function DoctorSchedulePage({
             {/* TODO: Implement calendar view in DoctorCalendar component */}
             <div className="lg:col-span-2">
               <DoctorCalendar
-                providerId={params.providerId}
+                providerId={providerId}
                 appointments={appointments}
               />
             </div>

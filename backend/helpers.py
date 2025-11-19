@@ -1,47 +1,48 @@
-from typing import Optional, Dict, Any
+from typing import Optional, List, Dict, Any
 from datetime import datetime
+from sqlalchemy.orm import Session
+from db.database import SessionLocal
+from db.tables.tables import Provider as DBProvider
 
-# TODO: Replace with actual database connection
-# Example: Use SQLAlchemy, psycopg2, or any other DB library
 
-
-def get_providers() -> list[Dict[str, Any]]:
+def _get_providers(db: Optional[Session] = None) -> List[DBProvider]:
     """
-    Get all providers from the database.
-    
-    TODO: Replace with actual database query
-    Example:
-        session.query(Provider).all()
+    Return a list of providers.
+
+    If a SQLAlchemy session is provided, query the database. Otherwise a
+    temporary session will be created and closed.
     """
-    return [
-        {
-            "id": "provider-1",
-            "name": "Dr. Sarah Chen",
-            "specialty": "Family Medicine",
-            "bio": "Dr. Chen has over 15 years of experience in family medicine and preventive care."
-        },
-        {
-            "id": "provider-2",
-            "name": "Dr. James Kumar",
-            "specialty": "Internal Medicine",
-            "bio": "Dr. Kumar specializes in internal medicine with a focus on chronic disease management."
-        }
-    ]
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
+
+    try:
+        providers = db.query(DBProvider).all()
+        return providers
+    finally:
+        if close_after:
+            db.close()
 
 
-def get_provider_by_id(provider_id: str) -> Optional[Dict[str, Any]]:
+def get_provider_by_id(provider_id: str, db: Optional[Session] = None) -> Optional[DBProvider]:
     """
     Get a single provider by ID.
-    
-    TODO: Replace with actual database query
-    Example:
-        session.query(Provider).filter(Provider.id == provider_id).first()
+
+    This will use the provided session if available, otherwise it will
+    create a short-lived session.
     """
-    providers = get_providers()
-    for provider in providers:
-        if provider["id"] == provider_id:
-            return provider
-    return None
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
+
+    try:
+        provider = db.query(DBProvider).filter(DBProvider.id == provider_id).first()
+        return provider
+    finally:
+        if close_after:
+            db.close()
 
 
 def check_slot_availability(slot_id: str, provider_id: str) -> bool:

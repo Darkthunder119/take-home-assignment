@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from db.tables.tables import Provider as DBProvider
 import random
-
+from pydantic import TypeAdapter
 from models import (
     Provider,
     TimeSlot,
@@ -16,8 +16,9 @@ from models import (
     AppointmentSlot,
     AppointmentProvider
 )
-from mock_db import (
+from helpers import (
     get_provider_by_id,
+    _get_providers,
     check_slot_availability,
     create_appointment,
     get_booked_slots
@@ -50,10 +51,11 @@ async def root():
 
 @app.get("/providers", response_model=List[Provider])
 def get_providers(db: Session = Depends(get_db)):
-    """Get all providers"""
-    providers = db.query(DBProvider).all()
-    return providers
-
+    """Get all providers (uses helper implementation)."""
+    providers = _get_providers(db)
+    # Convert SQLAlchemy models (ORM objects) to Pydantic models in one shot
+    provider_list_adapter = TypeAdapter(List[Provider])
+    return provider_list_adapter.validate_python(providers, from_attributes=True)
 
 @app.get("/api/availability", response_model=AvailabilityResponse)
 async def get_availability(
@@ -122,9 +124,9 @@ async def get_availability(
     
     return AvailabilityResponse(
         provider=AppointmentProvider(
-            id=provider["id"],
-            name=provider["name"],
-            specialty=provider["specialty"]
+            id=provider.id,
+            name=provider.name,
+            specialty=provider.specialty
         ),
         slots=slots
     )
@@ -198,9 +200,9 @@ async def book_appointment(request: CreateAppointmentRequest):
             end_time=created["end_time"]
         ),
         provider=AppointmentProvider(
-            id=provider["id"],
-            name=provider["name"],
-            specialty=provider["specialty"]
+            id=provider.id,
+            name=provider.name,
+            specialty=provider.specialty
         ),
         patient=request.patient,
         reason=created["reason"],
