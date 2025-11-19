@@ -62,14 +62,6 @@ def get_provider_by_id(provider_id: str, db: Optional[Session] = None) -> Option
 def check_slot_availability(slot_id: str, provider_id: str, db: Optional[Session] = None) -> bool:
     """
     Check if a time slot is available for booking.
-    
-    TODO: Replace with actual database query
-    Example:
-        existing = session.query(Appointment).filter(
-            Appointment.slot_id == slot_id,
-            Appointment.provider_id == provider_id
-        ).first()
-        return existing is None
     """
     close_after = False
     if db is None:
@@ -90,14 +82,6 @@ def check_slot_availability(slot_id: str, provider_id: str, db: Optional[Session
 def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Session] = None) -> AppointmentSchema:
     """
     Create a new appointment in the database.
-    
-    TODO: Replace with actual database insert
-    Example:
-        appointment = Appointment(**appointment_data)
-        session.add(appointment)
-        session.commit()
-        session.refresh(appointment)
-        return appointment
     """
     close_after = False
     if db is None:
@@ -209,15 +193,6 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
 def get_booked_slots(provider_id: str, start_date: Union[str, datetime], end_date: Union[str, datetime], db: Optional[Session] = None) -> Set[str]:
     """
     Get all booked slot IDs for a provider within a date range.
-    
-    TODO: Replace with actual database query
-    Example:
-        appointments = session.query(Appointment).filter(
-            Appointment.provider_id == provider_id,
-            Appointment.start_time >= start_date,
-            Appointment.start_time <= end_date
-        ).all()
-        return {apt.slot_id for apt in appointments}
     """
     close_after = False
     if db is None:

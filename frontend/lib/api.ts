@@ -17,28 +17,28 @@ export async function getAvailability(
   return response.json();
 }
 
-// export async function createAppointment(
-//   slotId: string,
-//   providerId: string,
-//   patient: PatientInfo,
-//   reason: string
-// ): Promise<Appointment> {
-//   const response = await fetch(`${API_URL}/appointments`, {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({
-//       slot_id: slotId,
-//       provider_id: providerId,
-//       patient,
-//       reason,
-//     }),
-//   });
-//   if (!response.ok) {
-//     const error = await response.json();
-//     throw new Error(error.detail || "Failed to create appointment");
-//   }
-//   return response.json();
-// }
+export async function createAppointment(
+  slotId: string,
+  providerId: string,
+  patient: PatientInfo,
+  reason: string
+): Promise<Appointment> {
+  const response = await fetch(`${API_URL}/appointments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      slot_id: slotId,
+      provider_id: providerId,
+      patient,
+      reason,
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.detail || "Failed to create appointment");
+  }
+  return response.json();
+}
 
 
 export interface Provider {
@@ -74,59 +74,6 @@ export interface Appointment {
   patient: PatientInfo;
   reason: string;
   created_at: string;
-}
-
-export async function createAppointment(
-  slotId: string,
-  providerId: string,
-  patient: PatientInfo,
-  reason: string
-): Promise<Appointment> {
-  console.log("[STUB] createAppointment called with:", {
-    slotId,
-    providerId,
-    patient,
-    reason,
-  });
-
-  const providers = await getProviders();
-  const provider = providers.find((p) => p.id === providerId);
-
-  if (!provider) {
-    throw new Error("Provider not found");
-  }
-
-  const slotTimestamp = parseInt(slotId.split("-").pop() || "0");
-  const startTime = new Date(slotTimestamp);
-  const endTime = new Date(startTime.getTime() + 30 * 60 * 1000);
-
-  const dateStr = startTime.toISOString().split("T")[0].replace(/-/g, "");
-  const randomNum = Math.floor(Math.random() * 1000)
-    .toString()
-    .padStart(3, "0");
-  const referenceNumber = `REF-${dateStr}-${randomNum}`;
-
-  const appointment: Appointment = {
-    id: `appointment-${Date.now()}`,
-    reference_number: referenceNumber,
-    status: "confirmed",
-    slot: {
-      start_time: startTime.toISOString(),
-      end_time: endTime.toISOString(),
-    },
-    provider: {
-      id: provider.id,
-      name: provider.name,
-      specialty: provider.specialty,
-    },
-    patient,
-    reason,
-    created_at: new Date().toISOString(),
-  };
-
-  console.log("[STUB] Appointment created successfully:", appointment);
-
-  return appointment;
 }
 
 export async function getProviderAppointments(
