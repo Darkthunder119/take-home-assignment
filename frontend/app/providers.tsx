@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { useState } from "react";
 import { MedicalProviderProvider } from "@/context/MedicalProviderContext";
+import { Analytics } from "@vercel/analytics/next";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -15,9 +16,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <MedicalProviderProvider>
-          {children}
-        </MedicalProviderProvider>
+        <Analytics />
+        <MedicalProviderProvider>{children}</MedicalProviderProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
