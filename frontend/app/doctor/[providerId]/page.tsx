@@ -10,8 +10,6 @@ import { AppointmentCard } from "@/components/AppointmentCard";
 import { DoctorCalendar } from "@/components/DoctorCalendar";
 import { format, addDays } from "date-fns";
 
-// TODO: 4. ✅ Add loading and error states
-
 export default function DoctorSchedulePage({
   params,
 }: {
