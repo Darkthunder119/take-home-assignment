@@ -17,6 +17,14 @@ import {
   PatientInfo,
 } from "@/lib/api";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { Header } from "@/components/Header";
@@ -59,8 +67,10 @@ export default function HomePage() {
       toast.error("Please select a time slot");
       return;
     }
-    setStep("patient-info");
+    // Open modal handled by Dialog trigger; keep step unchanged
   };
+
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleFormSubmit = async (patient: PatientInfo, reason: string) => {
     if (!selectedSlot || !selectedProvider) return;
@@ -224,13 +234,49 @@ export default function HomePage() {
                     onSelectSlot={handleSlotSelect}
                   />
                   <div className="mt-6 pt-6 border-t">
-                    <Button
-                      onClick={handleContinueToForm}
-                      disabled={!selectedSlot}
-                      className="w-full sm:w-auto rounded-full font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 px-8"
-                    >
-                      Continue to Patient Information
-                    </Button>
+                    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button
+                          onClick={() => setDialogOpen(true)}
+                          disabled={!selectedSlot}
+                          className="w-full sm:w-auto rounded-full font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 px-8"
+                        >
+                          Book
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Book Appointment</DialogTitle>
+                          <DialogDescription>
+                            Booking with {selectedProvider.name} on {selectedSlot ? new Date(selectedSlot.start_time).toLocaleString() : ""}
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <BookingForm
+                          onSubmit={async (patient, reason) => {
+                            try {
+                              const appointment = await createAppointment(
+                                selectedSlot!.id,
+                                selectedProvider!.id,
+                                patient,
+                                reason
+                              );
+                              setDialogOpen(false);
+                              toast.success("Appointment booked successfully!");
+                              router.push(
+                                `/confirmation?data=${encodeURIComponent(JSON.stringify(appointment))}`
+                              );
+                            } catch (error) {
+                              toast.error(
+                                error instanceof Error ? error.message : "Failed to book appointment"
+                              );
+                            }
+                          }}
+                          onBack={() => setDialogOpen(false)}
+                        />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </>
               ) : (
