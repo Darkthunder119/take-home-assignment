@@ -12,6 +12,7 @@ import {
   endOfWeek,
   addDays,
   isSameMonth,
+  isToday,
   addWeeks,
   subWeeks,
   addMonths,
@@ -96,31 +97,35 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-semibold">Calendar</h2>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground hidden md:block">
             {format(currentDate, viewMode === "month" ? "MMMM yyyy" : "'Week of' MMM d, yyyy")}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* view toggles hidden on small screens */}
           <button
             onClick={() => setViewMode("month")}
-            className={`px-3 py-1 rounded ${viewMode === "month" ? "bg-primary text-white" : "bg-white border"}`}>
+            className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "month" ? "bg-primary text-white" : "bg-white border"}`}>
             Month view
           </button>
           <button
             onClick={() => setViewMode("week")}
-            className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
+            className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
             Week view
           </button>
-          <button onClick={goPrev} className="px-2 py-1 rounded border">
-            ‹
-          </button>
-          <button onClick={goToday} className="px-2 py-1 rounded border">
-            Today
-          </button>
-          <button onClick={goNext} className="px-2 py-1 rounded border">
-            ›
-          </button>
+          {/* navigation - keep for mobile and desktop */}
+          <div className="flex items-center gap-2">
+            <button onClick={goPrev} className="px-2 py-1 rounded border" aria-label="Previous">
+              ‹
+            </button>
+            <button onClick={goToday} className="px-2 py-1 rounded border" aria-label="Today">
+              Today
+            </button>
+            <button onClick={goNext} className="px-2 py-1 rounded border" aria-label="Next">
+              ›
+            </button>
+          </div>
         </div>
       </div>
 
@@ -134,14 +139,15 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
       </div>
 
       {/* days grid */}
-      <div className="grid grid-cols-7 gap-px bg-gray-200">
+      {/* Desktop / large screens: grid */}
+      <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200">
         {days.map((date) => {
           const key = format(date, "yyyy-MM-dd");
           const dayAppts = appointmentsByDate[key] || [];
           return (
             <div
               key={key}
-              className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth(date) ? "" : "bg-gray-50 text-gray-400"}`}>
+              className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth(date) ? "" : "bg-gray-50 text-gray-400"} ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
               <div className="flex items-center justify-between mb-2">
                 <div className="text-xs font-bold">{date.getDate()}</div>
                 {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
@@ -160,6 +166,44 @@ export function DoctorCalendar({ providerId, appointments }: DoctorCalendarProps
                 {dayAppts.length > 3 && (
                   <div className="text-xs text-muted-foreground">+{dayAppts.length - 3} more</div>
                 )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile: stacked vertical day list (simpler for touch) */}
+      <div className="md:hidden mt-4 space-y-3">
+        {getWeekGrid(currentDate).map((date) => {
+          const key = format(date, "yyyy-MM-dd");
+          const dayAppts = appointmentsByDate[key] || [];
+          return (
+            <div
+              key={key}
+              className={`w-full p-3 rounded-lg border ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : "bg-white"}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <div className="text-sm font-semibold">{format(date, "EEE, MMM d")}</div>
+                </div>
+                {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {dayAppts.length === 0 && <div className="text-sm text-muted-foreground">No appointments</div>}
+                {dayAppts.map((apt, i) => (
+                  <button
+                    key={apt.id}
+                    onClick={() => setOpenAppointment(apt)}
+                    aria-label={`Open appointment for ${apt.patient_name} at ${formatUTCTime(apt.start_time)}`}
+                    className={`text-left w-full truncate rounded px-3 py-3 text-sm ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
+                    title={`${apt.patient_name}: ${apt.reason}`}>
+                    <div className="flex justify-between">
+                      <div className="font-medium">{apt.patient_name}</div>
+                      <div className="text-xs">{formatUTCTime(apt.start_time)}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{apt.reason}</div>
+                  </button>
+                ))}
               </div>
             </div>
           );

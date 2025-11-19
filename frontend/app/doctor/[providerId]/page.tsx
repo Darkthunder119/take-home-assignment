@@ -10,10 +10,8 @@ import { AppointmentCard } from "@/components/AppointmentCard";
 import { DoctorCalendar } from "@/components/DoctorCalendar";
 import { format, addDays } from "date-fns";
 
-// 2. TODO: Display in calendar format (week or month view) - enhance DoctorCalendar component
-// 3. ✅ Show appointment details: patient name, time, reason
-// 4. ✅ Add loading and error states
-// 5. TODO: Make responsive for mobile - add better mobile layout
+// TODO: 4. ✅ Add loading and error states
+// TODO: 5. TODO: Make responsive for mobile - add better mobile layout
 
 export default function DoctorSchedulePage({
   params,
@@ -74,7 +72,6 @@ export default function DoctorSchedulePage({
 
         {!isLoading && !error && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* TODO: Implement calendar view in DoctorCalendar component */}
             <div className="lg:col-span-2">
               <DoctorCalendar
                 providerId={providerId}
