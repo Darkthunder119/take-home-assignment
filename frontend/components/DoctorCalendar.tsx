@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { format, isSameDay, parseISO } from "date-fns";
+import { formatUTCTime, formatUTCDate } from "@/lib/time";
 
 // TODO: Complete calendar component
 // Requirements:
@@ -88,7 +89,9 @@ export function DoctorCalendar({
       {selectedDate && (
         <div className="mt-6 pt-6 border-t">
           <h3 className="font-semibold mb-3">
-            {format(selectedDate, "EEEE, MMMM d, yyyy")}
+            {selectedDate
+              ? selectedDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })
+              : ''}
           </h3>
 
           {selectedDateAppointments.length === 0 ? (
@@ -106,8 +109,7 @@ export function DoctorCalendar({
                     <div>
                       <p className="font-medium">{apt.patient_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(parseISO(apt.start_time), "h:mm a")} -{" "}
-                        {format(parseISO(apt.end_time), "h:mm a")}
+                        {`${formatUTCTime(apt.start_time)} - ${formatUTCTime(apt.end_time)}`}
                       </p>
                     </div>
                     <Badge variant="secondary">

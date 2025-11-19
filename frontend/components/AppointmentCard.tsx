@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User, FileText, Mail } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { formatUTCDateShort, formatUTCTime } from "@/lib/time";
 
 // TODO: Style and enhance appointment card
 // Requirements:
@@ -26,11 +27,8 @@ interface AppointmentCardProps {
 export function AppointmentCard({ appointment }: AppointmentCardProps) {
   const startTime = parseISO(appointment.start_time);
   const endTime = parseISO(appointment.end_time);
-  const dateStr = format(startTime, "MMM d");
-  const timeStr = `${format(startTime, "h:mm a")} - ${format(
-    endTime,
-    "h:mm a"
-  )}`;
+  const dateStr = formatUTCDateShort(appointment.start_time);
+  const timeStr = `${formatUTCTime(appointment.start_time)} - ${formatUTCTime(appointment.end_time)}`;
 
   // TODO: Add hover effects with more information
   // TODO: Add click to expand for more details

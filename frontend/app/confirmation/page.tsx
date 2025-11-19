@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Calendar, Clock, User, Mail, Phone } from "lucide-react";
 import { format } from "date-fns";
+import { formatUTCDate, formatUTCTime } from "@/lib/time";
 import { useEffect, useState } from "react";
 import { Appointment } from "@/lib/api";
 import { Header } from "@/components/Header";
@@ -83,7 +84,7 @@ export default function ConfirmationPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Date</p>
                 <p className="font-semibold text-foreground">
-                  {format(startTime, "EEEE, MMMM d, yyyy")}
+                  {formatUTCDate(appointment.slot.start_time)}
                 </p>
               </div>
             </div>
@@ -95,7 +96,7 @@ export default function ConfirmationPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Time</p>
                 <p className="font-semibold text-foreground">
-                  {format(startTime, "h:mm a")} - {format(endTime, "h:mm a")}
+                  {formatUTCTime(appointment.slot.start_time)} - {formatUTCTime(appointment.slot.end_time)}
                 </p>
               </div>
             </div>

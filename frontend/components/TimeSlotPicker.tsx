@@ -1,6 +1,7 @@
 import { TimeSlot } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from "date-fns";
+import { formatUTCDate, formatUTCDateShort, formatUTCTime, formatUTCDateTimeShort } from "@/lib/time";
 import { Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -35,11 +36,11 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
   }, [dates.join(",")]);
 
   const renderDatePill = (dateKey: string) => {
-    const d = new Date(slotsByDate[dateKey][0].start_time);
+    const start = slotsByDate[dateKey][0].start_time;
     return (
       <div className="flex flex-col items-center">
-        <div className="text-xs text-muted-foreground">{d.toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' })}</div>
-        <div className="text-sm font-semibold">{d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })}</div>
+        <div className="text-xs text-muted-foreground">{formatUTCDateTimeShort(start).split(' ')[0]}</div>
+        <div className="text-sm font-semibold">{formatUTCDateShort(start)}</div>
       </div>
     );
   };
@@ -97,12 +98,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
                   <span className="text-sm font-semibold">
-                    {new Date(slot.start_time).toLocaleTimeString(undefined, {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                      timeZone: "UTC",
-                    })}
+                    {formatUTCTime(slot.start_time)}
                   </span>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Duration: 30m</div>
@@ -117,10 +113,10 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
         selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}>
         <div>
-          {selectedSlot ? (
+              {selectedSlot ? (
             <div>
               <div className="text-sm text-foreground font-medium">Selected</div>
-              <div className="text-base font-semibold">{new Date(selectedSlot.start_time).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })} at {new Date(selectedSlot.start_time).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })}</div>
+              <div className="text-base font-semibold">{formatUTCDate(selectedSlot.start_time)} at {formatUTCTime(selectedSlot.start_time)}</div>
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">No time selected</div>

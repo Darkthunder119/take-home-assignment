@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
+import { formatUTCDateTimeShort } from "@/lib/time";
 import { Header } from "@/components/Header";
 import { useMedicalProvider } from "@/context/MedicalProviderContext";
 
@@ -162,7 +163,7 @@ export default function HomePage() {
                         <DialogHeader>
                           <DialogTitle>Book Appointment</DialogTitle>
                           <DialogDescription>
-                            Booking with {selectedProvider?.name} on {selectedSlot ? new Date(selectedSlot.start_time).toLocaleString() : ""}
+                            Booking with {selectedProvider?.name} on {selectedSlot ? formatUTCDateTimeShort(selectedSlot.start_time) : ""}
                           </DialogDescription>
                         </DialogHeader>
 
