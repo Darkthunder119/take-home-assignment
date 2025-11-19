@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
+from typing import List
+from sqlalchemy.orm import Session
+from db.database import get_db
+from db.tables.tables import Provider as DBProvider
 import random
 
 from models import (
@@ -13,7 +17,6 @@ from models import (
     AppointmentProvider
 )
 from mock_db import (
-    get_providers,
     get_provider_by_id,
     check_slot_availability,
     create_appointment,
@@ -45,12 +48,10 @@ async def root():
     }
 
 
-@app.get("/api/providers", response_model=list[Provider])
-async def list_providers():
-    """
-    Get all healthcare providers.
-    """
-    providers = get_providers()
+@app.get("/providers", response_model=List[Provider])
+def get_providers(db: Session = Depends(get_db)):
+    """Get all providers"""
+    providers = db.query(DBProvider).all()
     return providers
 
 
