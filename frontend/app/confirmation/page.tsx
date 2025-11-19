@@ -6,11 +6,31 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle2, Calendar, Clock, User, Mail, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { formatUTCDate, formatUTCTime } from "@/lib/time";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Appointment } from "@/lib/api";
 import { Header } from "@/components/Header";
 
 export default function ConfirmationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background">
+          <Header />
+          <div className="max-w-2xl mx-auto py-12 px-4">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 w-40 bg-gray-200 rounded" />
+              <div className="h-64 bg-gray-100 rounded" />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ConfirmationContent />
+    </Suspense>
+  );
+}
+
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [appointment, setAppointment] = useState<Appointment | null>(null);
@@ -109,7 +129,7 @@ export default function ConfirmationPage() {
                 <div className="flex items-center gap-2 text-sm">
                   <User className="w-4 h-4 text-muted-foreground" />
                   <span className="text-foreground">
-                    {appointment.patient.first_name}{" "}
+                    {appointment.patient.first_name} {" "}
                     {appointment.patient.last_name}
                   </span>
                 </div>
@@ -138,7 +158,7 @@ export default function ConfirmationPage() {
 
           <div className="bg-accent/50 rounded-lg p-4">
             <p className="text-sm text-foreground">
-              📧 A confirmation email has been sent to{" "}
+              📧 A confirmation email has been sent to {" "}
               <span className="font-medium">{appointment.patient.email}</span>
             </p>
           </div>
