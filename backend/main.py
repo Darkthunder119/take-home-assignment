@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 from typing import List
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from db.database import get_db
 from db.tables.tables import Provider as DBProvider
+from db.tables.tables import Appointment as DBAppointment, TimeSlot as DBTimeSlot, Patient as DBPatient
 import random
 from pydantic import TypeAdapter
 from models import (
@@ -13,6 +15,7 @@ from models import (
     CreateAppointmentRequest,
     Appointment,
     AvailabilityResponse,
+    ProviderAppointmentsResponse,
     AppointmentSlot,
     AppointmentProvider
 )
@@ -29,7 +32,9 @@ app = FastAPI(title="Healthcare Appointment API", version="1.0.0")
 # Configure CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    # Allow the common local dev origins. Add more if you serve the frontend
+    # from a different host (127.0.0.1) or port.
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +95,7 @@ async def get_availability(
     
     # Get booked slots (pass parsed datetimes so we don't re-parse inside helper)
     booked_slots = get_booked_slots(provider_id, start, end)
-    
+
     # Generate time slots
     slots = []
     current_date = start
@@ -187,8 +192,20 @@ async def book_appointment(request: CreateAppointmentRequest):
         "created_at": datetime.now().isoformat() + "Z"
     }
     
-    # Save appointment (mock)
-    created = create_appointment(appointment_data)
+    # Save appointment (creates DB TimeSlot if missing)
+    try:
+        created = create_appointment(appointment_data)
+    except ValueError as ve:
+        # Missing or invalid start/end times for slot creation
+        raise HTTPException(status_code=400, detail=str(ve))
+    except IntegrityError as ie:
+        # Database integrity issue (unique constraint, FK, race-condition)
+        # Return 422 Unprocessable Entity so client understands request
+        # was syntactically valid but couldn't be processed.
+        raise HTTPException(status_code=422, detail="Database integrity error: unable to create appointment")
+    except Exception as e:
+        # Fallback to 500 for unexpected errors
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     # `create_appointment` now returns a Pydantic `Appointment` model.
     # Build the response using that model but override provider & patient
@@ -211,73 +228,65 @@ async def book_appointment(request: CreateAppointmentRequest):
     )
 
 
-@app.get("/api/providers/{provider_id}/appointments")
+@app.get("/api/providers/{provider_id}/appointments", response_model=ProviderAppointmentsResponse)
 async def get_provider_appointments(
     provider_id: str,
     start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
-    end_date: str = Query(..., description="End date (YYYY-MM-DD)")
+    end_date: str = Query(..., description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db)
 ):
     """
     Get all appointments for a provider within a date range.
     
-    TODO: Implement this endpoint
     - Validate provider exists
     - Parse date range
     - Query database for appointments
     - Return formatted appointment list with patient info
     """
-    # TODO: Validate provider
     provider = get_provider_by_id(provider_id)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
     
-    # TODO: Validate dates
-    # TODO: Query appointments from database
-    # TODO: Replace mock data below with real database queries
-    
-    # Mock appointments for demonstration
-    mock_appointments = [
-        {
-            "id": "appt-001",
-            "patient_name": "John Doe",
-            "patient_email": "john.doe@example.com",
-            "start_time": "2024-10-18T09:00:00Z",
-            "end_time": "2024-10-18T09:30:00Z",
-            "reason": "Annual checkup",
-            "status": "confirmed"
-        },
-        {
-            "id": "appt-002",
-            "patient_name": "Jane Smith",
-            "patient_email": "jane.smith@example.com",
-            "start_time": "2024-10-18T10:00:00Z",
-            "end_time": "2024-10-18T10:30:00Z",
-            "reason": "Follow-up appointment",
-            "status": "confirmed"
-        },
-        {
-            "id": "appt-003",
-            "patient_name": "Bob Johnson",
-            "patient_email": "bob.j@example.com",
-            "start_time": "2024-10-19T14:00:00Z",
-            "end_time": "2024-10-19T14:30:00Z",
-            "reason": "Lab results review",
-            "status": "confirmed"
-        },
-        {
-            "id": "appt-004",
-            "patient_name": "Alice Williams",
-            "patient_email": "alice.w@example.com",
-            "start_time": "2024-10-21T11:00:00Z",
-            "end_time": "2024-10-21T11:30:00Z",
-            "reason": "Physical examination",
-            "status": "confirmed"
-        }
-    ]
-    
+    # Validate dates
+    try:
+        start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)  # make end exclusive
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+
+    if end_dt <= start_dt:
+        raise HTTPException(status_code=400, detail="end_date must be after or equal to start_date")
+
+    # Query appointments joined with time slots and patients
+    results = (
+        db.query(DBAppointment, DBTimeSlot, DBPatient)
+        .join(DBTimeSlot, DBAppointment.slot_id == DBTimeSlot.id)
+        .join(DBPatient, DBAppointment.patient_id == DBPatient.id)
+        .filter(DBAppointment.provider_id == provider_id)
+        .filter(DBTimeSlot.start_time >= start_dt)
+        .filter(DBTimeSlot.start_time < end_dt)
+        .order_by(DBTimeSlot.start_time)
+        .all()
+    )
+
+    appointments = []
+    for appt, slot, patient in results:
+        appointments.append({
+            "id": appt.id,
+            "patient_name": f"{patient.first_name} {patient.last_name}",
+            "patient_email": patient.email,
+            "start_time": slot.start_time.isoformat() + "Z" if slot.start_time else None,
+            "end_time": slot.end_time.isoformat() + "Z" if slot.end_time else None,
+            "reason": appt.reason,
+            "status": appt.status,
+        })
+
+    # Also include any appointments that may not have a timeslot join (defensive)
+    # but in this schema appointments must have a time slot, so above should suffice.
+
     return {
         "provider_id": provider_id,
-        "appointments": mock_appointments
+        "appointments": appointments,
     }
 
 

@@ -112,6 +112,45 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
             db.refresh(patient)
 
         # Create appointment record
+        # Ensure the timeslot exists in the DB (the availability endpoint
+        # generates in-memory slots but doesn't persist them). If the slot
+        # row is missing we create it from the provided start/end times so the
+        # appointment FK constraint is satisfied.
+        slot_id = appointment_data.get("slot_id")
+        if slot_id:
+            slot = db.query(DBTimeSlot).filter(DBTimeSlot.id == slot_id).first()
+            if not slot:
+                # Expect start_time/end_time in ISO format (with or without Z)
+                s = appointment_data.get("start_time")
+                e = appointment_data.get("end_time")
+                try:
+                    # strip trailing Z if present
+                    if isinstance(s, str) and s.endswith("Z"):
+                        s = s[:-1]
+                    if isinstance(e, str) and e.endswith("Z"):
+                        e = e[:-1]
+                    start_dt = datetime.fromisoformat(s) if s else None
+                    end_dt = datetime.fromisoformat(e) if e else None
+                except Exception:
+                    start_dt = None
+                    end_dt = None
+
+                # Create a minimal TimeSlot if we have times; otherwise raise
+                # a clear error so caller knows the slot couldn't be created.
+                if start_dt and end_dt:
+                    slot = DBTimeSlot(
+                        id=slot_id,
+                        provider_id=appointment_data.get("provider_id"),
+                        start_time=start_dt,
+                        end_time=end_dt,
+                        available=False,
+                    )
+                    db.add(slot)
+                    # flush so FK will be satisfied for the appointment insert
+                    db.flush()
+                else:
+                    raise ValueError("Missing or invalid start_time/end_time for new time slot")
+
         appt = DBAppointment(
             id=appointment_data.get("id"),
             reference_number=appointment_data.get("reference_number"),
