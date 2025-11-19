@@ -6,10 +6,10 @@
     "install:all": "pnpm install && cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
     "dev": "concurrently \"pnpm --filter './frontend' dev\" \"cd backend && source venv/bin/activate && uvicorn main:app --reload --port 8000\"",
     "dev:frontend": "pnpm --filter './frontend' dev",
-    "dev:backend": "cd backend && source venv/bin/activate && uvicorn main:app --reload --port 8000",
+    "dev:backend": "cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port $PORT",
     "build": "pnpm --filter './frontend' build"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2"  
   }
 }
