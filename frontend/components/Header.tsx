@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMedicalProvider } from "@/context/MedicalProviderContext";
 import {
   Calendar as CalendarIcon,
@@ -8,10 +9,12 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function Header() {
   const { provider } = useMedicalProvider();
   const doctorHref = provider ? `/doctor/${provider.id}` : "/doctor/provider-1";
+  const router = useRouter();
 
   return (
     <header className="border-b bg-card">
@@ -32,11 +35,17 @@ export function Header() {
                 <span className="hidden sm:inline">Book Appointment</span>
               </Link>
             </Button>
-            <Button variant="ghost" asChild>
-              <Link href={doctorHref} className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (provider) router.push(doctorHref);
+                else toast.error("Please select a provider to view the schedule");
+              }}
+            >
+              <div className="flex items-center gap-2">
                 <Stethoscope className="w-4 h-4" />
                 <span className="hidden sm:inline">Doctor Schedule</span>
-              </Link>
+              </div>
             </Button>
           </nav>
         </div>
