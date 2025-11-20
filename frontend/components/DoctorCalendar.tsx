@@ -17,6 +17,7 @@ import {
   subWeeks,
   addMonths,
   subMonths,
+  subDays,
 } from "date-fns";
 import { formatUTCTime } from "@/lib/time";
 import {
@@ -46,7 +47,7 @@ interface DoctorCalendarProps {
 
 export function DoctorCalendar({ providerId, appointments, isLoading, error }: DoctorCalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [openAppointment, setOpenAppointment] = useState<Appointment | null>(null);
 
   const appointmentsByDate = useMemo(() => {
@@ -73,7 +74,7 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
     return Array.from({ length: 7 }, (_, i) => addDays(start, i));
   }
 
-  const days = viewMode === "month" ? getMonthGrid(currentDate) : getWeekGrid(currentDate);
+  const days = viewMode === "month" ? getMonthGrid(currentDate) : viewMode === "week" ? getWeekGrid(currentDate) : [currentDate];
   const isCurrentMonth = (d: Date) => isSameMonth(d, currentDate);
 
   const [isMobile, setIsMobile] = useState<boolean>(false);
@@ -91,21 +92,46 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
   function goPrev() {
     // on mobile prefer week navigation regardless of viewMode
     if (isMobile) {
+      if (viewMode === "day") {
+        setCurrentDate((prev) => subDays(prev, 1));
+        return;
+      }
       setCurrentDate((prev) => subWeeks(prev, 1));
       return;
     }
-    setCurrentDate((prev) => (viewMode === "month" ? subMonths(prev, 1) : subWeeks(prev, 1)));
+    // desktop: step depends on viewMode
+    if (viewMode === "month") setCurrentDate((prev) => subMonths(prev, 1));
+    else if (viewMode === "week") setCurrentDate((prev) => subWeeks(prev, 1));
+    else setCurrentDate((prev) => subDays(prev, 1));
   }
   function goNext() {
     if (isMobile) {
+      if (viewMode === "day") {
+        setCurrentDate((prev) => addDays(prev, 1));
+        return;
+      }
       setCurrentDate((prev) => addWeeks(prev, 1));
       return;
     }
-    setCurrentDate((prev) => (viewMode === "month" ? addMonths(prev, 1) : addWeeks(prev, 1)));
+    if (viewMode === "month") setCurrentDate((prev) => addMonths(prev, 1));
+    else if (viewMode === "week") setCurrentDate((prev) => addWeeks(prev, 1));
+    else setCurrentDate((prev) => addDays(prev, 1));
   }
 
-  const prevTitle = isMobile ? "Previous week" : viewMode === "month" ? "Previous month" : "Previous week";
-  const nextTitle = isMobile ? "Next week" : viewMode === "month" ? "Next month" : "Next week";
+  const prevTitle = isMobile
+    ? "Previous week"
+    : viewMode === "month"
+    ? "Previous month"
+    : viewMode === "week"
+    ? "Previous week"
+    : "Previous day";
+  const nextTitle = isMobile
+    ? "Next week"
+    : viewMode === "month"
+    ? "Next month"
+    : viewMode === "week"
+    ? "Next week"
+    : "Next day";
   const todayTitle = "Go to today";
 
   const tagColors = [
@@ -170,6 +196,11 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
             className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
             Week view
           </button>
+          <button
+            onClick={() => setViewMode("day")}
+            className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-white border"}`}>
+            Day view
+          </button>
           {/* navigation - keep for mobile and desktop */}
           <div className="flex items-center gap-2">
             <button onClick={goPrev} className="px-2 py-1 rounded border" aria-label="Previous" title={prevTitle}>
@@ -182,89 +213,137 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
               ›
             </button>
           </div>
+          {/* Mobile view toggle for Week / Day */}
+          <div className="flex md:hidden items-center gap-2 ml-2">
+            <button
+              onClick={() => setViewMode("week")}
+              className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
+              Week
+            </button>
+            <button
+              onClick={() => setViewMode("day")}
+              className={`px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-white border"}`}>
+              Day
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* day names */}
-      <div className="grid grid-cols-7 gap-px bg-gray-200 rounded-t-md overflow-hidden">
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-          <div key={d} className="bg-white text-xs text-center py-2 font-semibold text-gray-600">
-            {d}
-          </div>
-        ))}
-      </div>
-
-      {/* days grid */}
-      {/* Desktop / large screens: grid */}
-      <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200">
-        {days.map((date) => {
-          const key = format(date, "yyyy-MM-dd");
-          const dayAppts = appointmentsByDate[key] || [];
-          return (
-            <div
-              key={key}
-              className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth(date) ? "" : "bg-gray-50 text-gray-400"} ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-bold">{date.getDate()}</div>
-                {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
-              </div>
-
-              <div className="flex flex-col gap-1">
-                {dayAppts.slice(0, 3).map((apt, i) => (
-                  <button
-                    key={apt.id}
-                    onClick={() => setOpenAppointment(apt)}
-                    className={`text-left w-full truncate rounded px-1 py-0.5 text-xs ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
-                    title={`${apt.patient_name}: ${apt.reason}`}>
-                    {`${formatUTCTime(apt.start_time)} ${apt.patient_name}`}
-                  </button>
-                ))}
-                {dayAppts.length > 3 && (
-                  <div className="text-xs text-muted-foreground">+{dayAppts.length - 3} more</div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Mobile: stacked vertical day list (simpler for touch) */}
-      <div className="md:hidden mt-4 space-y-3">
-        {getWeekGrid(currentDate).map((date) => {
-          const key = format(date, "yyyy-MM-dd");
-          const dayAppts = appointmentsByDate[key] || [];
-          return (
-            <div
-              key={key}
-              className={`w-full p-3 rounded-lg border ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : "bg-white"}`}>
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <div className="text-sm font-semibold">{format(date, "EEE, MMM d")}</div>
+      {viewMode === "day" ? (
+        // Day view: single day schedule
+        <div className="mt-4">
+          <div className="mb-4 text-lg font-semibold">{format(currentDate, "EEEE, MMM d")}</div>
+          <div>
+            {(() => {
+              const key = format(currentDate, "yyyy-MM-dd");
+              const dayAppts = appointmentsByDate[key] || [];
+              if (dayAppts.length === 0) {
+                return <div className="p-6 bg-white rounded">No appointments for this day</div>;
+              }
+              return (
+                <div className="space-y-3">
+                  {dayAppts.map((apt, i) => (
+                    <button
+                      key={apt.id}
+                      onClick={() => setOpenAppointment(apt)}
+                      className={`w-full text-left p-3 rounded shadow-sm border border-transparent ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
+                      title={`${apt.patient_name}: ${apt.reason}`}>
+                      <div className="flex justify-between items-center">
+                        <div className="font-medium">{apt.patient_name}</div>
+                        <div className="text-xs">{formatUTCTime(apt.start_time)} - {formatUTCTime(apt.end_time)}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{apt.reason}</div>
+                    </button>
+                  ))}
                 </div>
-                {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
+              );
+            })()}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* day names (desktop only) */}
+          <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200 rounded-t-md overflow-hidden">
+            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+              <div key={d} className="bg-white text-xs text-center py-2 font-semibold text-gray-600">
+                {d}
               </div>
+            ))}
+          </div>
 
-              <div className="flex flex-col gap-2">
-                {dayAppts.length === 0 && <div className="text-sm text-muted-foreground">No appointments</div>}
-                {dayAppts.map((apt, i) => (
-                  <button
-                    key={apt.id}
-                    onClick={() => setOpenAppointment(apt)}
-                    aria-label={`Open appointment for ${apt.patient_name} at ${formatUTCTime(apt.start_time)}`}
-                    className={`text-left w-full truncate rounded px-3 py-3 text-sm ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
-                    title={`${apt.patient_name}: ${apt.reason}`}>
-                    <div className="flex justify-between">
-                      <div className="font-medium">{apt.patient_name}</div>
-                      <div className="text-xs">{formatUTCTime(apt.start_time)}</div>
+          {/* days grid */}
+          {/* Desktop / large screens: grid */}
+          <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200">
+            {days.map((date) => {
+              const key = format(date, "yyyy-MM-dd");
+              const dayAppts = appointmentsByDate[key] || [];
+              return (
+                <div
+                  key={key}
+                  className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth(date) ? "" : "bg-gray-50 text-gray-400"} ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-bold">{date.getDate()}</div>
+                    {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    {dayAppts.slice(0, 3).map((apt, i) => (
+                      <button
+                        key={apt.id}
+                        onClick={() => setOpenAppointment(apt)}
+                        className={`text-left w-full truncate rounded px-1 py-0.5 text-xs ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
+                        title={`${apt.patient_name}: ${apt.reason}`}>
+                        {`${formatUTCTime(apt.start_time)} ${apt.patient_name}`}
+                      </button>
+                    ))}
+                    {dayAppts.length > 3 && (
+                      <div className="text-xs text-muted-foreground">+{dayAppts.length - 3} more</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Mobile: stacked vertical day list (simpler for touch) */}
+          <div className="md:hidden mt-4 space-y-3">
+            {getWeekGrid(currentDate).map((date) => {
+              const key = format(date, "yyyy-MM-dd");
+              const dayAppts = appointmentsByDate[key] || [];
+              return (
+                <div
+                  key={key}
+                  className={`w-full p-3 rounded-lg border ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : "bg-white"}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="text-sm font-semibold">{format(date, "EEE, MMM d")}</div>
                     </div>
-                    <div className="text-xs text-muted-foreground">{apt.reason}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                    {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    {dayAppts.length === 0 && <div className="text-sm text-muted-foreground">No appointments</div>}
+                    {dayAppts.map((apt, i) => (
+                      <button
+                        key={apt.id}
+                        onClick={() => setOpenAppointment(apt)}
+                        aria-label={`Open appointment for ${apt.patient_name} at ${formatUTCTime(apt.start_time)}`}
+                        className={`text-left w-full truncate rounded px-3 py-3 text-sm ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
+                        title={`${apt.patient_name}: ${apt.reason}`}>
+                        <div className="flex justify-between">
+                          <div className="font-medium">{apt.patient_name}</div>
+                          <div className="text-xs">{formatUTCTime(apt.start_time)}</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground">{apt.reason}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Appointment details dialog */}
       <Dialog open={!!openAppointment} onOpenChange={(open) => { if (!open) setOpenAppointment(null); }}>
