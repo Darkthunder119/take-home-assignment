@@ -18,8 +18,8 @@ export default function ConfirmationPage() {
           <Header />
           <div className="max-w-2xl mx-auto py-12 px-4">
             <div className="animate-pulse space-y-4">
-              <div className="h-8 w-40 bg-gray-200 rounded" />
-              <div className="h-64 bg-gray-100 rounded" />
+              <div className="h-8 w-40 bg-muted rounded" />
+              <div className="h-64 bg-muted rounded" />
             </div>
           </div>
         </div>

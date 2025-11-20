@@ -77,7 +77,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
               className={`min-w-[96px] px-4 py-3 rounded-2xl border transition-colors text-left flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 selectedDate === d
                   ? 'bg-primary text-white border-primary shadow-md transform translate-y-0'
-                  : 'bg-white/50 border-transparent text-foreground'
+                  : 'bg-card/50 border-transparent text-foreground'
               }`}
             >
               {renderDatePill(d)}
@@ -88,7 +88,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
 
       {/* Times for selected date */}
       <div>
-        {currentSlots.length === 0 ? (
+            {currentSlots.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">No times available for selected date.</p>
         ) : (
           <div id="times-list" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" role="list" aria-label={`Available times for ${selectedDate ? formatUTCDateShort(currentSlots[0].start_time) : "selected date"}`}>
@@ -118,7 +118,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
       </div>
 
       {/* Yellow summary bar with Book action (sticky + animated) */}
-      <div aria-live="polite" role="status" className={`mt-4 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-md flex items-center justify-between gap-4 sticky bottom-0 z-10 transition-transform transition-opacity duration-300 ${
+      <div aria-live="polite" role="status" className={`mt-4 p-4 bg-amber-50 dark:bg-accent/50 border-l-4 border-amber-400 dark:border-accent rounded-md flex items-center justify-between gap-4 sticky bottom-0 z-10 transition-transform transition-opacity duration-300 dark:shadow-lg ${
         selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}>
         <div>
@@ -136,7 +136,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
           <Button
             onClick={() => onBook && onBook()}
             disabled={!selectedSlot || !selectedSlot.available}
-            className={`rounded-full px-6 font-semibold bg-amber-400 text-white hover:bg-amber-500 transition-transform duration-200 ${
+            className={`rounded-full px-6 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-transform duration-200 ${
               buttonPulse ? 'scale-105 shadow-xl' : ''
             }`}
           >

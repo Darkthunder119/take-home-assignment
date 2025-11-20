@@ -7,6 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { useState } from "react";
 import { MedicalProviderProvider } from "@/context/MedicalProviderContext";
 import { Analytics } from "@vercel/analytics/next";
+import DarkModeToggle from "@/components/DarkModeToggle";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -18,6 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <Sonner />
         <Analytics />
         <MedicalProviderProvider>{children}</MedicalProviderProvider>
+        <DarkModeToggle />
       </TooltipProvider>
     </QueryClientProvider>
   );

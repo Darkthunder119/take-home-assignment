@@ -48,7 +48,7 @@ export default function DayCell({
         tabIndex={0}
         role="gridcell"
         onKeyDown={onKeyDown}
-        className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth ? "" : "bg-gray-50 text-gray-400"} ${isToday ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
+        className={`bg-card min-h-[100px] p-2 text-sm ${isCurrentMonth ? "" : "bg-muted text-muted-foreground"} ${isToday ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs font-bold">{date.getDate()}</div>
           {dayAppts.length > 0 && (
@@ -77,7 +77,7 @@ export default function DayCell({
 
   // mobile variant
   return (
-    <div key={key} className={`w-full p-3 rounded-lg border ${isToday ? "ring-2 ring-primary/40 bg-primary/5" : "bg-white"}`}>
+    <div key={key} className={`w-full p-3 rounded-lg border ${isToday ? "ring-2 ring-primary/40 bg-primary/5" : "bg-card"}`}>
       <div className="flex items-center justify-between mb-2">
         <div>
           <div className="text-sm font-semibold">{format(date, "EEE, MMM d")}</div>

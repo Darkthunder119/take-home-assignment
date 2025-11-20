@@ -92,26 +92,30 @@ export default function DoctorSchedulePage({
               {/* Date filter controls (apply button) - responsive across breakpoints */}
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 <label className="text-sm text-muted-foreground flex-shrink-0 hidden md:block">From</label>
-                <input
-                  type="date"
-                  value={pendingStart}
-                  onChange={(e) => setPendingStart(e.target.value)}
-                  className="border rounded px-2 py-1 flex-1 min-w-[120px] lg:w-36 text-base md:text-sm"
-                />
+                <div className="flex-1 min-w-[120px] lg:w-36">
+                  <input
+                    type="date"
+                    value={pendingStart}
+                    onChange={(e) => setPendingStart(e.target.value)}
+                    className="rounded px-2 py-1 w-full text-base md:text-sm bg-background text-foreground placeholder:text-muted-foreground border border-input"
+                  />
+                </div>
                 <label className="text-sm text-muted-foreground flex-shrink-0 hidden md:block">To</label>
-                <input
-                  type="date"
-                  value={pendingEnd}
-                  onChange={(e) => setPendingEnd(e.target.value)}
-                  className="border rounded px-2 py-1 flex-1 min-w-[120px] lg:w-36 text-base md:text-sm"
-                />
+                <div className="flex-1 min-w-[120px] lg:w-36">
+                  <input
+                    type="date"
+                    value={pendingEnd}
+                    onChange={(e) => setPendingEnd(e.target.value)}
+                    className="rounded px-2 py-1 w-full text-base md:text-sm bg-background text-foreground placeholder:text-muted-foreground border border-input"
+                  />
+                </div>
                 <button
                   onClick={() => {
                     setStartDate(pendingStart);
                     setEndDate(pendingEnd);
                   }}
                   disabled={new Date(pendingEnd) < new Date(pendingStart)}
-                  className={`px-3 py-1 rounded text-sm font-medium flex-shrink-0 ${new Date(pendingEnd) < new Date(pendingStart) ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-primary text-white'}`}>
+                  className={`px-3 py-1 rounded text-sm font-medium flex-shrink-0 ${new Date(pendingEnd) < new Date(pendingStart) ? 'opacity-50 cursor-not-allowed bg-muted' : 'bg-primary text-white'}`}>
                   Apply
                 </button>
                 {new Date(pendingEnd) < new Date(pendingStart) && (

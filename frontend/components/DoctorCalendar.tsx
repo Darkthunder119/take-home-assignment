@@ -198,17 +198,17 @@ export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalenda
     return (
       <Card className="p-6">
         <div className="animate-pulse">
-          <div className="h-6 w-48 bg-gray-200 rounded mb-4" />
+          <div className="h-6 w-48 bg-muted rounded mb-4" />
 
           <div className="hidden md:grid grid-cols-7 gap-2">
             {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="h-24 bg-gray-100 rounded" />
+              <div key={i} className="h-24 bg-muted rounded" />
             ))}
           </div>
 
           <div className="md:hidden space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 bg-gray-100 rounded" />
+              <div key={i} className="h-20 bg-muted rounded" />
             ))}
           </div>
         </div>
@@ -256,17 +256,17 @@ export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalenda
           <div className="hidden md:flex items-center gap-2">
             <button
               onClick={() => setViewMode("month")}
-              className={`px-3 py-1 rounded ${viewMode === "month" ? "bg-primary text-white" : "bg-white border"}`}>
+              className={`px-3 py-1 rounded ${viewMode === "month" ? "bg-primary text-white" : "bg-card border-border text-muted-foreground"}`}>
               Month
             </button>
             <button
               onClick={() => setViewMode("week")}
-              className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
+              className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-card border-border text-muted-foreground"}`}>
               Week
             </button>
             <button
               onClick={() => setViewMode("day")}
-              className={`px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-white border"}`}>
+              className={`px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-card border-border text-muted-foreground"}`}>
               Day
             </button>
           </div>
@@ -275,12 +275,12 @@ export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalenda
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setViewMode("week")}
-              className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
+              className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-card border-border text-muted-foreground"}`}>
               Week
             </button>
             <button
               onClick={() => setViewMode("day")}
-              className={`px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-white border"}`}>
+              className={`px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-card border-border text-muted-foreground"}`}>
               Day
             </button>
           </div>
@@ -296,7 +296,7 @@ export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalenda
               const key = format(currentDate, "yyyy-MM-dd");
               const dayAppts = appointmentsByDate[key] || [];
               if (dayAppts.length === 0) {
-                return <div className="p-6 bg-white rounded">No appointments for this day</div>;
+                return <div className="p-6 bg-card rounded">No appointments for this day</div>;
               }
               return (
                 <div className="space-y-3">
@@ -321,9 +321,9 @@ export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalenda
       ) : (
         <>
           {/* day names (desktop only) */}
-          <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200 rounded-t-md overflow-hidden">
+          <div className="hidden md:grid grid-cols-7 gap-px bg-border rounded-t-md overflow-hidden">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-              <div key={d} className="bg-white text-xs text-center py-2 font-semibold text-gray-600">
+              <div key={d} className="bg-card text-xs text-center py-2 font-semibold text-muted-foreground">
                 {d}
               </div>
             ))}
@@ -331,7 +331,7 @@ export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalenda
 
           {/* days grid */}
           {/* Desktop / large screens: grid */}
-          <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200" role="grid" aria-label="Calendar days">
+          <div className="hidden md:grid grid-cols-7 gap-px bg-border" role="grid" aria-label="Calendar days">
             {days.map((date, idx) => {
               const key = format(date, "yyyy-MM-dd");
               const dayAppts = appointmentsByDate[key] || [];
