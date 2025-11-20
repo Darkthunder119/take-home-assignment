@@ -27,7 +27,7 @@ The app is a full stack booking application with a FastAPI backend (Python) and 
 The frontend is hosted at: https://decoda-booking.vercel.app
 The backend is hosted at: https://decoda-nvi3.onrender.com
 The DB is hosted on neon.tech
-I added the schema as a SQL dump: [schema.sql](../schema.sql)
+I added the schema as a SQL dump: [schema.sql](./schema.sql)
 To run things locally you need an env file with `NEXT_PUBLIC_API_URL` on the frontend and an env file with `DATABASE_URL` on the backend. With the given schema you can host your data on any PostgreSQL database.
 
 
