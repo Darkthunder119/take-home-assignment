@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Set, TypedDict, Union, Tuple
+from typing import Optional, List, Set, TypedDict, Union, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
@@ -101,7 +101,7 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
                 first_name=p_first or "",
                 last_name=p_last or "",
                 email=p_email or "",
-                phone=p_phone or ""
+                phone=p_phone or "",
             )
             db.add(patient)
             # If we're managing our own session (close_after==True) commit
@@ -132,9 +132,7 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
                 # assumptions. In that case raise an error so the caller
                 # can create the slot within its own transaction.
                 if not close_after:
-                    raise ValueError(
-                        "Timeslot missing: caller must create or lock the timeslot in its transaction"
-                    )
+                    raise ValueError("Timeslot missing: caller must create or lock the timeslot")
 
                 # Expect start_time/end_time in ISO format (with or without Z)
                 s = appointment_data.get("start_time")
@@ -174,7 +172,7 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
             provider_id=appointment_data.get("provider_id"),
             patient_id=patient.id,
             reason=appointment_data.get("reason"),
-            status=appointment_data.get("status", "scheduled")
+            status=appointment_data.get("status", "scheduled"),
         )
         db.add(appt)
         # As above: commit only when we opened the session here. If the
@@ -201,7 +199,7 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
             "start_time": None,
             "end_time": None,
             "status": appt.status,
-            "created_at": appt.created_at.isoformat() + "Z" if appt.created_at else datetime.now().isoformat() + "Z"
+            "created_at": appt.created_at.isoformat() + "Z" if appt.created_at else datetime.now().isoformat() + "Z",
         }
 
         if appt.slot_id:
@@ -215,21 +213,30 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
         # AppointmentSchema from the available fields so callers still receive
         # a typed object.
         try:
-            validated = AppointmentSchema.model_validate({
-                "id": created["id"],
-                "reference_number": created["reference_number"],
-                "status": created["status"],
-                "slot": {"start_time": created["start_time"], "end_time": created["end_time"]},
-                "provider": {"id": created["provider_id"], "name": "", "specialty": ""},
-                "patient": {
-                    "first_name": created["patient_first_name"] or "",
-                    "last_name": created["patient_last_name"] or "",
-                    "email": created["patient_email"] or "",
-                    "phone": created["patient_phone"] or ""
-                },
-                "reason": created["reason"] or "",
-                "created_at": created["created_at"]
-            })
+            validated = AppointmentSchema.model_validate(
+                {
+                    "id": created["id"],
+                    "reference_number": created["reference_number"],
+                    "status": created["status"],
+                    "slot": {
+                        "start_time": created["start_time"],
+                        "end_time": created["end_time"],
+                    },
+                    "provider": {
+                        "id": created["provider_id"],
+                        "name": "",
+                        "specialty": "",
+                    },
+                    "patient": {
+                        "first_name": created["patient_first_name"] or "",
+                        "last_name": created["patient_last_name"] or "",
+                        "email": created["patient_email"] or "",
+                        "phone": created["patient_phone"] or "",
+                    },
+                    "reason": created["reason"] or "",
+                    "created_at": created["created_at"],
+                }
+            )
             return validated
         except Exception:
             # If validation fails, return a minimal AppointmentSchema constructed
@@ -238,23 +245,35 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
                 id=created.get("id", ""),
                 reference_number=created.get("reference_number", ""),
                 status=created.get("status", ""),
-                slot={"start_time": created.get("start_time"), "end_time": created.get("end_time")},
-                provider={"id": created.get("provider_id", ""), "name": "", "specialty": ""},
+                slot={
+                    "start_time": created.get("start_time"),
+                    "end_time": created.get("end_time"),
+                },
+                provider={
+                    "id": created.get("provider_id", ""),
+                    "name": "",
+                    "specialty": "",
+                },
                 patient={
                     "first_name": created.get("patient_first_name", ""),
                     "last_name": created.get("patient_last_name", ""),
                     "email": created.get("patient_email", ""),
-                    "phone": created.get("patient_phone", "")
+                    "phone": created.get("patient_phone", ""),
                 },
                 reason=created.get("reason", ""),
-                created_at=created.get("created_at", datetime.now().isoformat() + "Z")
+                created_at=created.get("created_at", datetime.now().isoformat() + "Z"),
             )
     finally:
         if close_after:
             db.close()
 
 
-def get_booked_slots(provider_id: str, start_date: Union[str, datetime], end_date: Union[str, datetime], db: Optional[Session] = None) -> Set[str]:
+def get_booked_slots(
+    provider_id: str,
+    start_date: Union[str, datetime],
+    end_date: Union[str, datetime],
+    db: Optional[Session] = None,
+) -> Set[str]:
     """
     Get all booked slot IDs for a provider within a date range.
     """
@@ -301,4 +320,3 @@ def _session_scope(db: Optional[Session]) -> Tuple[Session, bool]:
         db = SessionLocal()
         close_after = True
     return db, close_after
-

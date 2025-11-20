@@ -57,19 +57,30 @@ def parse_weekday(val: str) -> int:
         raise ValueError(f"weekday number out of range: {val}")
 
     names = {
-        "monday": 0, "mon": 0,
-        "tuesday": 1, "tue": 1, "tues": 1,
-        "wednesday": 2, "wed": 2,
-        "thursday": 3, "thu": 3, "thurs": 3,
-        "friday": 4, "fri": 4,
-        "saturday": 5, "sat": 5,
-        "sunday": 6, "sun": 6,
+        "monday": 0,
+        "mon": 0,
+        "tuesday": 1,
+        "tue": 1,
+        "tues": 1,
+        "wednesday": 2,
+        "wed": 2,
+        "thursday": 3,
+        "thu": 3,
+        "thurs": 3,
+        "friday": 4,
+        "fri": 4,
+        "saturday": 5,
+        "sat": 5,
+        "sunday": 6,
+        "sun": 6,
     }
     if v in names:
         return names[v]
     raise ValueError(f"invalid weekday: {val}")
 
+
 API_BASE = "http://localhost:8000/api"
+
 
 async def book(client: httpx.AsyncClient, payload: dict):
     try:
@@ -78,7 +89,13 @@ async def book(client: httpx.AsyncClient, payload: dict):
     except Exception as e:
         return e
 
-async def run_once(client: httpx.AsyncClient, provider_id: str, iteration_index: int = 0, weekday: int = 0):
+
+async def run_once(
+    client: httpx.AsyncClient,
+    provider_id: str,
+    iteration_index: int = 0,
+    weekday: int = 0,
+):
     # choose the next Monday at 10:00 local time and offset by iteration
     # so each iteration targets a distinct timeslot (prevents reuse across
     # iterations). We add `iteration_index` minutes to the base time.
@@ -100,12 +117,13 @@ async def run_once(client: httpx.AsyncClient, provider_id: str, iteration_index:
             "email": f"concurrent+{ts_ms}@example.com",
             "phone": "555-000-0000",
         },
-        "reason": "Concurrency test"
+        "reason": "Concurrency test",
     }
 
     tasks = [book(client, payload) for _ in range(2)]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return slot_id, results
+
 
 async def main(iterations: int = 5, weekday: int = 0):
     async with httpx.AsyncClient() as client:
@@ -125,14 +143,14 @@ async def main(iterations: int = 5, weekday: int = 0):
 
         for i in range(iterations):
             slot_id, results = await run_once(client, provider_id, i, weekday)
-            print(f"\nIteration {i+1} — slot {slot_id}")
+            print(f"\nIteration {i + 1} — slot {slot_id}")
             for idx, res in enumerate(results):
                 if isinstance(res, Exception):
                     print(f"  task {idx}: Exception: {res}")
                     other += 1
                 else:
                     status, body = res
-                    body_snip = body[:300].replace('\n', ' ')
+                    body_snip = body[:300].replace("\n", " ")
                     print(f"  task {idx}: status={status}, body={body_snip}")
                     if status in (200, 201):
                         success += 1
@@ -147,15 +165,22 @@ async def main(iterations: int = 5, weekday: int = 0):
         print("  conflicts (expected for one of concurrent requests):", conflict)
         print("  other errors:", other)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser()
-    p.add_argument('--iter', type=int, default=5, help='Number of iterations')
-    p.add_argument('--weekday', type=str, default='monday', help='Target weekday (name like "monday" or number 0=Monday or 1=Monday)')
+    p.add_argument("--iter", type=int, default=5, help="Number of iterations")
+    p.add_argument(
+        "--weekday",
+        type=str,
+        default="monday",
+        help='Target weekday (name like "monday" or number 0=Monday or 1=Monday)',
+    )
     args = p.parse_args()
     try:
         wd = parse_weekday(args.weekday)
     except Exception as e:
         print("Invalid --weekday value:", e)
-        raise SystemExit(2)
+        raise SystemExit(2) from None
     asyncio.run(main(args.iter, wd))

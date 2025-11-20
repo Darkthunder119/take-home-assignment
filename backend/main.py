@@ -26,7 +26,6 @@ from models import (
 from helpers import (
     get_provider_by_id,
     get_providers,
-    check_slot_availability,
     create_appointment,
     get_booked_slots,
 )
@@ -97,9 +96,7 @@ async def get_availability(
         start = datetime.strptime(start_date, "%Y-%m-%d")
         end = datetime.strptime(end_date, "%Y-%m-%d")
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
-        )
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD") from None
 
     if end <= start:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
@@ -122,16 +119,12 @@ async def get_availability(
                     if hour == 12:
                         continue
 
-                    slot_start = current_date.replace(
-                        hour=hour, minute=minute, second=0, microsecond=0
-                    )
+                    slot_start = current_date.replace(hour=hour, minute=minute, second=0, microsecond=0)
                     slot_end = slot_start + timedelta(minutes=30)
 
                     # Only include future slots
                     if slot_start > now:
-                        slot_id = (
-                            f"slot-{provider_id}-{int(slot_start.timestamp() * 1000)}"
-                        )
+                        slot_id = f"slot-{provider_id}-{int(slot_start.timestamp() * 1000)}"
 
                         slots.append(
                             TimeSlot(
@@ -145,9 +138,7 @@ async def get_availability(
         current_date += timedelta(days=1)
 
     return AvailabilityResponse(
-        provider=AppointmentProvider(
-            id=provider.id, name=provider.name, specialty=provider.specialty
-        ),
+        provider=AppointmentProvider(id=provider.id, name=provider.name, specialty=provider.specialty),
         slots=slots,
     )
 
@@ -178,7 +169,7 @@ async def book_appointment(request: CreateAppointmentRequest, db: Session = Depe
         start_time = datetime.fromtimestamp(slot_timestamp)
         end_time = start_time + timedelta(minutes=30)
     except (ValueError, IndexError):
-        raise HTTPException(status_code=400, detail="Invalid slot ID format")
+        raise HTTPException(status_code=400, detail="Invalid slot ID format") from None
 
     # Generate reference number
     date_str = start_time.strftime("%Y%m%d")
@@ -206,11 +197,7 @@ async def book_appointment(request: CreateAppointmentRequest, db: Session = Depe
     # insert occur as part of one serialized transaction.
     try:
         slot_row = (
-            db.execute(
-                select(DBTimeSlot).where(DBTimeSlot.id == request.slot_id).with_for_update()
-            )
-            .scalars()
-            .first()
+            db.execute(select(DBTimeSlot).where(DBTimeSlot.id == request.slot_id).with_for_update()).scalars().first()
         )
 
         if slot_row:
@@ -245,9 +232,7 @@ async def book_appointment(request: CreateAppointmentRequest, db: Session = Depe
                 # and lock it so we can proceed deterministically.
                 db.rollback()
                 slot_row = (
-                    db.execute(
-                        select(DBTimeSlot).where(DBTimeSlot.id == request.slot_id).with_for_update()
-                    )
+                    db.execute(select(DBTimeSlot).where(DBTimeSlot.id == request.slot_id).with_for_update())
                     .scalars()
                     .first()
                 )
@@ -255,7 +240,7 @@ async def book_appointment(request: CreateAppointmentRequest, db: Session = Depe
                     # This is unexpected: the insert failed but we still
                     # can't find the row. Return a server error so the
                     # client can retry.
-                    raise HTTPException(status_code=500, detail="Failed to reserve timeslot")
+                    raise HTTPException(status_code=500, detail="Failed to reserve timeslot") from None
 
         # Insert appointment using the same DB session so everything is
         # committed atomically. create_appointment will use the provided
@@ -264,33 +249,27 @@ async def book_appointment(request: CreateAppointmentRequest, db: Session = Depe
         db.commit()
     except ValueError as ve:
         db.rollback()
-        raise HTTPException(status_code=400, detail=str(ve))
-    except IntegrityError as ie:
+        raise HTTPException(status_code=400, detail=str(ve)) from None
+    except IntegrityError:
         # Integrity errors may indicate a concurrent insert; rollback and
         # return a conflict so clients can retry.
         db.rollback()
-        raise HTTPException(
-            status_code=409, detail="This time slot has already been booked"
-        )
+        raise HTTPException(status_code=409, detail="This time slot has already been booked") from None
     except HTTPException:
         # Re-raise HTTPExceptions (e.g., 409 above)
         db.rollback()
         raise
     except Exception:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from None
 
     # Build the response using the created Pydantic model and context
     return Appointment(
         id=created.id,
         reference_number=created.reference_number,
         status=created.status,
-        slot=AppointmentSlot(
-            start_time=created.slot.start_time, end_time=created.slot.end_time
-        ),
-        provider=AppointmentProvider(
-            id=provider.id, name=provider.name, specialty=provider.specialty
-        ),
+        slot=AppointmentSlot(start_time=created.slot.start_time, end_time=created.slot.end_time),
+        provider=AppointmentProvider(id=provider.id, name=provider.name, specialty=provider.specialty),
         patient=request.patient,
         reason=created.reason,
         created_at=created.created_at,
@@ -322,18 +301,12 @@ async def get_provider_appointments(
     # Validate dates
     try:
         start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-        end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(
-            days=1
-        )  # make end exclusive
+        end_dt = datetime.strptime(end_date, "%Y-%m-%d") + timedelta(days=1)  # make end exclusive
     except ValueError:
-        raise HTTPException(
-            status_code=400, detail="Invalid date format. Use YYYY-MM-DD"
-        )
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD") from None
 
     if end_dt <= start_dt:
-        raise HTTPException(
-            status_code=400, detail="end_date must be after or equal to start_date"
-        )
+        raise HTTPException(status_code=400, detail="end_date must be after or equal to start_date")
 
     # Query appointments joined with time slots and patients
     results = (
@@ -354,9 +327,7 @@ async def get_provider_appointments(
                 "id": appt.id,
                 "patient_name": f"{patient.first_name} {patient.last_name}",
                 "patient_email": patient.email,
-                "start_time": (
-                    slot.start_time.isoformat() + "Z" if slot.start_time else None
-                ),
+                "start_time": (slot.start_time.isoformat() + "Z" if slot.start_time else None),
                 "end_time": slot.end_time.isoformat() + "Z" if slot.end_time else None,
                 "reason": appt.reason,
                 "status": appt.status,

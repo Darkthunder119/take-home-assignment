@@ -18,8 +18,10 @@ Requirements:
   pip install httpx
 
 Notes:
- - The test creates unique patient emails per request to avoid patient-duplication unique-index failures.
- - Ensure the backend is running at http://localhost:8000 and that the DB has the uniqueness indexes applied.
+ - The test creates unique patient emails per request to avoid
+     patient-duplication unique-index failures.
+ - Ensure the backend is running at http://localhost:8000 and that
+     the DB has the uniqueness indexes applied.
 """
 
 import asyncio
@@ -70,17 +72,27 @@ def parse_weekday(val: str) -> int:
         raise ValueError(f"weekday number out of range: {val}")
 
     names = {
-        "monday": 0, "mon": 0,
-        "tuesday": 1, "tue": 1, "tues": 1,
-        "wednesday": 2, "wed": 2,
-        "thursday": 3, "thu": 3, "thurs": 3,
-        "friday": 4, "fri": 4,
-        "saturday": 5, "sat": 5,
-        "sunday": 6, "sun": 6,
+        "monday": 0,
+        "mon": 0,
+        "tuesday": 1,
+        "tue": 1,
+        "tues": 1,
+        "wednesday": 2,
+        "wed": 2,
+        "thursday": 3,
+        "thu": 3,
+        "thurs": 3,
+        "friday": 4,
+        "fri": 4,
+        "saturday": 5,
+        "sat": 5,
+        "sunday": 6,
+        "sun": 6,
     }
     if v in names:
         return names[v]
     raise ValueError(f"invalid weekday: {val}")
+
 
 async def do_post(client: httpx.AsyncClient, payload: dict):
     start = time.monotonic()
@@ -94,7 +106,14 @@ async def do_post(client: httpx.AsyncClient, payload: dict):
     latency = (time.monotonic() - start) * 1000.0
     return status, body, latency
 
-async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_index: int, concurrency: int, weekday: int):
+
+async def run_iteration(
+    client: httpx.AsyncClient,
+    provider_id: str,
+    iteration_index: int,
+    concurrency: int,
+    weekday: int,
+):
     # Build a unique slot for this iteration using the requested weekday at 10:00
     dt = _next_weekday(datetime.now(), weekday)
     base_slot = dt.replace(hour=10, minute=0, second=0, microsecond=0)
@@ -103,7 +122,7 @@ async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_i
     slot_id = f"slot-{provider_id}-{ts_ms}"
 
     tasks = []
-    for j in range(concurrency):
+    for _j in range(concurrency):
         # Unique patient email per request to avoid unique-email collisions
         unique = uuid.uuid4().hex[:8]
         payload = {
@@ -116,7 +135,7 @@ async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_i
                 "email": f"concurrent+{ts_ms}_{unique}@example.com",
                 "phone": "555-000-0000",
             },
-            "reason": "Assertive concurrency test"
+            "reason": "Assertive concurrency test",
         }
         tasks.append(do_post(client, payload))
 
@@ -139,6 +158,7 @@ async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_i
         "slot_time": slot_dt.isoformat() + "Z",
     }
 
+
 async def main(iterations: int = 5, concurrency: int = 10, weekday: int = 0):
     async with httpx.AsyncClient() as client:
         r = await client.get(f"{API_BASE}/providers")
@@ -156,7 +176,7 @@ async def main(iterations: int = 5, concurrency: int = 10, weekday: int = 0):
         all_latencies = []
 
         for i in range(iterations):
-            print(f"\nIteration {i+1}/{iterations}")
+            print(f"\nIteration {i + 1}/{iterations}")
             out = await run_iteration(client, provider_id, i, concurrency, weekday)
             s = out["success_count"]
             c = out["conflict_count"]
@@ -165,7 +185,10 @@ async def main(iterations: int = 5, concurrency: int = 10, weekday: int = 0):
             print(f" slot={out['slot_id']} time={out['slot_time']}")
             print(f"  successes={s}  conflicts={c}  other={o}")
             if lat:
-                print(f"  latency ms: min={min(lat):.1f} median={statistics.median(lat):.1f} max={max(lat):.1f}")
+                min_lat = min(lat)
+                med_lat = statistics.median(lat)
+                max_lat = max(lat)
+                print(f"  latency ms: min={min_lat:.1f} median={med_lat:.1f} max={max_lat:.1f}")
             total_success += s
             total_conflict += c
             total_other += o
@@ -187,17 +210,27 @@ async def main(iterations: int = 5, concurrency: int = 10, weekday: int = 0):
         print(f"  total_conflicts: {total_conflict}")
         print(f"  total_other: {total_other}")
         if all_latencies:
-            print(f"  latency ms overall: min={min(all_latencies):.1f} median={statistics.median(all_latencies):.1f} max={max(all_latencies):.1f}")
+            min_a = min(all_latencies)
+            med_a = statistics.median(all_latencies)
+            max_a = max(all_latencies)
+            print(f"  latency ms overall: min={min_a:.1f} median={med_a:.1f} max={max_a:.1f}")
 
     print("\nAll assertions passed.")
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser()
-    p.add_argument('--iter', type=int, default=5, help='Number of iterations (distinct slots)')
-    p.add_argument('--concurrency', type=int, default=10, help='Concurrent requests per slot')
-    p.add_argument('--weekday', type=str, default='monday', help='Target weekday (name like "monday" or number 0=Monday or 1=Monday)')
+    p.add_argument("--iter", type=int, default=5, help="Number of iterations (distinct slots)")
+    p.add_argument("--concurrency", type=int, default=10, help="Concurrent requests per slot")
+    p.add_argument(
+        "--weekday",
+        type=str,
+        default="monday",
+        help='Target weekday (name like "monday" or number 0=Monday or 1=Monday)',
+    )
     args = p.parse_args()
     try:
         wd = parse_weekday(args.weekday)

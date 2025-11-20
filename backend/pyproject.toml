@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 120
+exclude = ["venv", "__pycache__", "backend/venv"]
+
+[tool.ruff.lint]
+# Use common rule groups; tweak if you want stricter or looser settings
+select = ["E", "W", "F", "C", "B", "Q"]
+# Ignore a few rules that are either opinionated for this codebase
+# or require larger refactors (complexity and B008 FastAPI pattern).
+ignore = ["C901", "B008"]

@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
-from datetime import datetime
 import re
 
 
@@ -24,26 +23,26 @@ class PatientInfo(BaseModel):
     email: str
     phone: str
 
-    @field_validator('first_name', 'last_name')
+    @field_validator("first_name", "last_name")
     @classmethod
     def validate_name(cls, v: str) -> str:
-        if not re.match(r'^[a-zA-Z\s]+$', v):
-            raise ValueError('Name must contain only letters and spaces')
+        if not re.match(r"^[a-zA-Z\s]+$", v):
+            raise ValueError("Name must contain only letters and spaces")
         return v
 
-    @field_validator('email')
+    @field_validator("email")
     @classmethod
     def validate_email(cls, v: str) -> str:
-        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', v):
-            raise ValueError('Invalid email format')
+        if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", v):
+            raise ValueError("Invalid email format")
         return v
 
-    @field_validator('phone')
+    @field_validator("phone")
     @classmethod
     def validate_phone(cls, v: str) -> str:
         # Flexible phone format: (555) 555-5555 or +1-555-555-5555
-        if not re.match(r'^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$', v):
-            raise ValueError('Invalid phone number format')
+        if not re.match(r"^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$", v):
+            raise ValueError("Invalid phone number format")
         return v
 
 
@@ -94,4 +93,3 @@ class ProviderAppointment(BaseModel):
 class ProviderAppointmentsResponse(BaseModel):
     provider_id: str
     appointments: list[ProviderAppointment]
-
