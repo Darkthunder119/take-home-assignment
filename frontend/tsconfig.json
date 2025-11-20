@@ -21,7 +21,7 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "noUnusedParameters": false,
     "noUnusedLocals": false,
     "strictNullChecks": false
