@@ -20,6 +20,8 @@ import {
   subDays,
 } from "date-fns";
 import { formatUTCTime } from "@/lib/time";
+import { TAG_COLORS } from "@/lib/constants";
+import DayCell from "@/components/ui/DayCell";
 import {
   Dialog,
   DialogContent,
@@ -191,13 +193,7 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
     : "Next day";
   const todayTitle = "Go to today";
 
-  const tagColors = [
-    "bg-blue-100 text-blue-800",
-    "bg-green-100 text-green-800",
-    "bg-purple-100 text-purple-800",
-    "bg-pink-100 text-pink-800",
-    "bg-yellow-100 text-yellow-800",
-  ];
+  const tagColors = TAG_COLORS;
 
   // Loading state: show skeleton placeholders
   if (isLoading) {
@@ -342,34 +338,18 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
               const key = format(date, "yyyy-MM-dd");
               const dayAppts = appointmentsByDate[key] || [];
               return (
-                <div
+                <DayCell
                   key={key}
-                  data-day-index={idx}
-                  tabIndex={0}
-                  role="gridcell"
+                  date={date}
+                  idx={idx}
+                  dayAppts={dayAppts}
+                  isCurrentMonth={isCurrentMonth(date)}
+                  isToday={isToday(date)}
+                  variant="desktop"
+                  onOpenAppointment={(apt) => setOpenAppointment(apt)}
                   onKeyDown={handleDayKeyDown}
-                  className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth(date) ? "" : "bg-gray-50 text-gray-400"} ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-bold">{date.getDate()}</div>
-                    {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    {dayAppts.slice(0, 3).map((apt, i) => (
-                      <button
-                        key={apt.id}
-                        onClick={() => setOpenAppointment(apt)}
-                        className={`text-left w-full truncate rounded px-2 py-1 text-sm min-h-[44px] ${tagColors[i % tagColors.length]} hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
-                        title={`${apt.patient_name}: ${apt.reason}`}
-                        aria-label={`Appointment for ${apt.patient_name} at ${formatUTCTime(apt.start_time)}: ${apt.reason}`}>
-                        {`${formatUTCTime(apt.start_time)} ${apt.patient_name}`}
-                      </button>
-                    ))}
-                    {dayAppts.length > 3 && (
-                      <div className="text-xs text-muted-foreground">+{dayAppts.length - 3} more</div>
-                    )}
-                  </div>
-                </div>
+                  tagColors={tagColors}
+                />
               );
             })}
           </div>
@@ -380,34 +360,16 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
               const key = format(date, "yyyy-MM-dd");
               const dayAppts = appointmentsByDate[key] || [];
               return (
-                <div
+                <DayCell
                   key={key}
-                  className={`w-full p-3 rounded-lg border ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : "bg-white"}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <div className="text-sm font-semibold">{format(date, "EEE, MMM d")}</div>
-                    </div>
-                    {dayAppts.length > 0 && <Badge variant="secondary">{dayAppts.length}</Badge>}
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    {dayAppts.length === 0 && <div className="text-sm text-muted-foreground">No appointments</div>}
-                    {dayAppts.map((apt, i) => (
-                      <button
-                        key={apt.id}
-                        onClick={() => setOpenAppointment(apt)}
-                        aria-label={`Open appointment for ${apt.patient_name} at ${formatUTCTime(apt.start_time)}`}
-                        className={`text-left w-full truncate rounded px-3 py-3 text-sm ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
-                        title={`${apt.patient_name}: ${apt.reason}`}>
-                        <div className="flex justify-between">
-                          <div className="font-medium">{apt.patient_name}</div>
-                          <div className="text-xs">{formatUTCTime(apt.start_time)}</div>
-                        </div>
-                        <div className="text-xs text-muted-foreground">{apt.reason}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  date={date}
+                  dayAppts={dayAppts}
+                  isCurrentMonth={isCurrentMonth(date)}
+                  isToday={isToday(date)}
+                  variant="mobile"
+                  onOpenAppointment={(apt: Appointment) => setOpenAppointment(apt)}
+                  tagColors={tagColors}
+                />
               );
             })}
           </div>
