@@ -106,24 +106,6 @@ The architecture diagram shows the main request flow and where critical services
 
 ![](./architecture.svg)
 
-If your renderer doesn't display SVGs, here's a simple ASCII fallback:
-
-```
-User (Browser)  -->  Next.js Frontend (Vercel)
-                              |
-                              v
-                      FastAPI Backend (Booking logic)
-                              |
-                              v
-                        Postgres (Neon)
-
-```
-
-Notes:
-- The frontend (Next.js) serves client pages and calls backend APIs for booking and data.
-- The backend (FastAPI) executes booking transactions using DB row-level locks and unique constraints.
-- The database is Postgres (schema in `schema.sql`).
-
 ---
 
 **Next steps / Recommendations**
