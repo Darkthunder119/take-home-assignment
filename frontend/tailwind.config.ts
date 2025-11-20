@@ -1,8 +1,13 @@
 import type { Config } from "tailwindcss";
 
 export default {
+  // Ensure color utilities used via JS constants are always generated
+  safelist: [
+    { pattern: /bg-(blue|green|purple|pink|yellow)-(100)/ },
+    { pattern: /text-(blue|green|purple|pink|yellow)-(800)/ },
+  ],
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {

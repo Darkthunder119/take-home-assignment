@@ -3,6 +3,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { formatUTCTime } from "@/lib/time";
+import { Badge } from "@/components/ui/badge";
 import { TAG_COLORS } from "@/lib/constants";
 
 interface AppointmentShort {
@@ -51,12 +52,9 @@ export default function DayCell({
         <div className="flex items-center justify-between mb-2">
           <div className="text-xs font-bold">{date.getDate()}</div>
           {dayAppts.length > 0 && (
-            <div className="inline-flex">
-              <span className="sr-only">{dayAppts.length} appointments</span>
-              <div className="text-xs">
-                {dayAppts.length}
-              </div>
-            </div>
+            <Badge variant="secondary" aria-label={`${dayAppts.length} appointments`}>
+              {dayAppts.length}
+            </Badge>
           )}
         </div>
 

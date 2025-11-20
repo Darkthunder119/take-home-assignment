@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   format,
   parseISO,
@@ -41,13 +40,12 @@ interface Appointment {
 }
 
 interface DoctorCalendarProps {
-  providerId: string;
   appointments: Appointment[];
   isLoading?: boolean;
   error?: unknown;
 }
 
-export function DoctorCalendar({ providerId, appointments, isLoading, error }: DoctorCalendarProps) {
+export function DoctorCalendar({ appointments, isLoading, error }: DoctorCalendarProps) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [openAppointment, setOpenAppointment] = useState<Appointment | null>(null);

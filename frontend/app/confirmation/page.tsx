@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Calendar, Clock, User, Mail, Phone } from "lucide-react";
 import Avatar from "@/components/ui/avatar";
-import { format } from "date-fns";
 import { formatUTCDate, formatUTCTime } from "@/lib/time";
 import { useEffect, useState, Suspense } from "react";
 import { Appointment } from "@/lib/api";
@@ -52,9 +51,6 @@ function ConfirmationContent() {
   }, [searchParams, router]);
 
   if (!appointment) return null;
-
-  const startTime = new Date(appointment.slot.start_time);
-  const endTime = new Date(appointment.slot.end_time);
 
   return (
     <div className="min-h-screen bg-background">

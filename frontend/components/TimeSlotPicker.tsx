@@ -66,7 +66,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
       <div className="overflow-x-auto">
         <div className="flex gap-3 py-2 sticky top-0 bg-background/60 backdrop-blur-sm z-20">
           {dates.length === 0 && <div className="text-sm text-muted-foreground">No available dates</div>}
-          {dates.map((d, idx) => (
+          {dates.map((d) => (
             <button
               key={d}
               type="button"

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProviderCard } from "@/components/ProviderCard";
 import { TimeSlotPicker } from "@/components/TimeSlotPicker";
@@ -19,7 +18,6 @@ import {
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -88,11 +86,6 @@ export default function HomePage() {
         error instanceof Error ? error.message : "Failed to book appointment"
       );
     }
-  };
-
-  const handleBack = () => {
-    // simple back behaviour: clear selection
-    setSelectedSlot(null);
   };
 
   return (
@@ -168,25 +161,7 @@ export default function HomePage() {
                         </DialogHeader>
 
                         <BookingForm
-                          onSubmit={async (patient, reason) => {
-                            try {
-                              const appointment = await createAppointment(
-                                selectedSlot!.id,
-                                selectedProvider!.id,
-                                patient,
-                                reason
-                              );
-                              setDialogOpen(false);
-                              toast.success("Appointment booked successfully!");
-                              router.push(
-                                `/confirmation?data=${encodeURIComponent(JSON.stringify(appointment))}`
-                              );
-                            } catch (error) {
-                              toast.error(
-                                error instanceof Error ? error.message : "Failed to book appointment"
-                              );
-                            }
-                          }}
+                          onSubmit={handleFormSubmit}
                           onBack={() => setDialogOpen(false)}
                         />
                       </DialogContent>
