@@ -113,7 +113,7 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form aria-busy={loading} onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6" aria-label="Booking form">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -122,7 +122,7 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
               <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John" {...field} />
+                  <Input placeholder="John" autoComplete="given-name" aria-required={true} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -135,7 +135,7 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
               <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Doe" {...field} />
+                  <Input placeholder="Doe" autoComplete="family-name" aria-required={true} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -153,6 +153,9 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
                 <Input
                   type="email"
                   placeholder="john.doe@example.com"
+                  autoComplete="email"
+                  inputMode="email"
+                  aria-required={true}
                   {...field}
                 />
               </FormControl>
@@ -171,6 +174,9 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
                 <Input
                   type="tel"
                   placeholder="1 (555) 555-0123"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  aria-required={true}
                   value={formatPhoneDisplay(field.value)}
                   onChange={(e) => {
                     const input = e.target.value;
@@ -196,6 +202,8 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
                 <Textarea
                   placeholder="Please describe the reason for your visit..."
                   rows={4}
+                  autoComplete="off"
+                  aria-required={true}
                   {...field}
                 />
               </FormControl>

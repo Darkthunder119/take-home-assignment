@@ -14,9 +14,17 @@ export function ProviderCard({ provider, onSelect, selected }: ProviderCardProps
       onClick={() => onSelect(provider)}
       role="button"
       aria-pressed={!!selected}
+      aria-label={`${provider.name}, ${provider.specialty}`}
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onSelect(provider);
+        // Support Enter and Space to activate the card. Prevent space from scrolling.
+        if (e.key === "Enter") {
+          onSelect(provider);
+        }
+        if (e.key === " " || e.code === "Space") {
+          e.preventDefault();
+          onSelect(provider);
+        }
       }}
       className={`relative p-6 sm:p-8 transition-transform duration-200 ease-out cursor-pointer group border-2 focus:outline-none focus:ring-2 focus:ring-primary/40 ${
         selected

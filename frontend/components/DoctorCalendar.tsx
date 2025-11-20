@@ -118,6 +118,63 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
     else setCurrentDate((prev) => addDays(prev, 1));
   }
 
+  // Keyboard navigation for day cells and paging
+  function handleDayKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+    const key = e.key;
+    const target = e.currentTarget as HTMLElement;
+    const idx = Number(target.dataset.dayIndex);
+    if (Number.isNaN(idx)) return;
+
+    // Arrow navigation across the linear days array
+    if (key === "ArrowRight") {
+      const next = document.querySelector<HTMLElement>(`[data-day-index=\"${idx + 1}\"]`);
+      next?.focus();
+      e.preventDefault();
+      return;
+    }
+    if (key === "ArrowLeft") {
+      const prev = document.querySelector<HTMLElement>(`[data-day-index=\"${idx - 1}\"]`);
+      prev?.focus();
+      e.preventDefault();
+      return;
+    }
+    if (key === "Home") {
+      const first = document.querySelector<HTMLElement>(`[data-day-index=\"0\"]`);
+      first?.focus();
+      e.preventDefault();
+      return;
+    }
+    if (key === "End") {
+      const last = document.querySelectorAll<HTMLElement>("[data-day-index]");
+      const lastEl = last[last.length - 1];
+      lastEl?.focus();
+      e.preventDefault();
+      return;
+    }
+    if (key === "Enter") {
+      // If this day has appointment buttons, activate the first one
+      const firstBtn = target.querySelector<HTMLButtonElement>("button");
+      firstBtn?.click();
+      e.preventDefault();
+      return;
+    }
+    if (key === "PageUp") {
+      // Step backwards depending on viewMode
+      if (viewMode === "month") setCurrentDate((prev) => subMonths(prev, 1));
+      else if (viewMode === "week") setCurrentDate((prev) => subWeeks(prev, 1));
+      else setCurrentDate((prev) => subDays(prev, 1));
+      e.preventDefault();
+      return;
+    }
+    if (key === "PageDown") {
+      if (viewMode === "month") setCurrentDate((prev) => addMonths(prev, 1));
+      else if (viewMode === "week") setCurrentDate((prev) => addWeeks(prev, 1));
+      else setCurrentDate((prev) => addDays(prev, 1));
+      e.preventDefault();
+      return;
+    }
+  }
+
   const prevTitle = isMobile
     ? "Previous week"
     : viewMode === "month"
@@ -280,13 +337,17 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
 
           {/* days grid */}
           {/* Desktop / large screens: grid */}
-          <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200">
-            {days.map((date) => {
+          <div className="hidden md:grid grid-cols-7 gap-px bg-gray-200" role="grid" aria-label="Calendar days">
+            {days.map((date, idx) => {
               const key = format(date, "yyyy-MM-dd");
               const dayAppts = appointmentsByDate[key] || [];
               return (
                 <div
                   key={key}
+                  data-day-index={idx}
+                  tabIndex={0}
+                  role="gridcell"
+                  onKeyDown={handleDayKeyDown}
                   className={`bg-white min-h-[100px] p-2 text-sm ${isCurrentMonth(date) ? "" : "bg-gray-50 text-gray-400"} ${isToday(date) ? "ring-2 ring-primary/40 bg-primary/5" : ""}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-bold">{date.getDate()}</div>

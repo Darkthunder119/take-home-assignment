@@ -72,11 +72,11 @@ function ConfirmationContent() {
         </div>
 
         <Card className="p-6 sm:p-8 shadow-[var(--shadow-card)] space-y-6">
-          <div className="bg-accent/30 rounded-lg p-4 text-center">
+          <div className="bg-accent/30 rounded-lg p-4 text-center" role="status" aria-live="polite">
             <p className="text-sm text-muted-foreground mb-1">
               Reference Number
             </p>
-            <p className="text-2xl font-bold text-primary">
+            <p className="text-2xl font-bold text-primary" aria-label={`Reference ${appointment.reference_number}`}>
               {appointment.reference_number}
             </p>
           </div>

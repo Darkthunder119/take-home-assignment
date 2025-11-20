@@ -66,13 +66,15 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
       <div className="overflow-x-auto">
         <div className="flex gap-3 py-2 sticky top-0 bg-background/60 backdrop-blur-sm z-20">
           {dates.length === 0 && <div className="text-sm text-muted-foreground">No available dates</div>}
-          {dates.map((d) => (
+          {dates.map((d, idx) => (
             <button
               key={d}
+              type="button"
               onClick={() => setSelectedDate(d)}
               aria-pressed={selectedDate === d}
+              aria-controls={`times-list`}
               aria-label={`Show times for ${formatUTCDate(slotsByDate[d][0].start_time)}`}
-              className={`min-w-[96px] px-4 py-3 rounded-2xl border transition-colors text-left flex items-center justify-center ${
+              className={`min-w-[96px] px-4 py-3 rounded-2xl border transition-colors text-left flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 selectedDate === d
                   ? 'bg-primary text-white border-primary shadow-md transform translate-y-0'
                   : 'bg-white/50 border-transparent text-foreground'
@@ -89,7 +91,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
         {currentSlots.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">No times available for selected date.</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div id="times-list" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" role="list" aria-label={`Available times for ${selectedDate ? formatUTCDateShort(currentSlots[0].start_time) : "selected date"}`}>
             {currentSlots.map((slot) => (
               <Button
                 key={slot.id}
@@ -100,6 +102,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
                 className={`h-auto py-3 px-4 flex flex-col items-start justify-center gap-1 rounded-xl transition-all ${
                   selectedSlot?.id === slot.id ? "shadow-lg shadow-primary/30" : "hover:border-primary/40"
                 }`}
+                role="listitem"
               >
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4" />
@@ -115,7 +118,7 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
       </div>
 
       {/* Yellow summary bar with Book action (sticky + animated) */}
-      <div className={`mt-4 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-md flex items-center justify-between gap-4 sticky bottom-0 z-10 transition-transform transition-opacity duration-300 ${
+      <div aria-live="polite" role="status" className={`mt-4 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-md flex items-center justify-between gap-4 sticky bottom-0 z-10 transition-transform transition-opacity duration-300 ${
         selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
       }`}>
         <div>

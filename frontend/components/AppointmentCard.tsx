@@ -46,6 +46,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
           <button
             type="button"
             aria-expanded={isOpen}
+            aria-controls={`appointment-content-${appointment.id}`}
             aria-label={`Appointment with ${appointment.patient_name} on ${dateStr} at ${timeStr}`}
             className="p-4 cursor-pointer text-left w-full min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
@@ -95,7 +96,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-4 pb-4 border-t pt-4">
+          <div id={`appointment-content-${appointment.id}`} role="region" aria-labelledby={`appointment-header-${appointment.id}`} className="px-4 pb-4 border-t pt-4">
             <p className="text-sm font-medium mb-2">Actions</p>
             <div className="flex gap-2">
               <Button
