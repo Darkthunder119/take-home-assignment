@@ -1,8 +1,13 @@
-from typing import Optional, List, Dict, Set, TypedDict, Union
+from typing import Optional, List, Dict, Set, TypedDict, Union, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from db.database import SessionLocal
-from db.tables.tables import Provider as DBProvider, Appointment as DBAppointment, Patient as DBPatient, TimeSlot as DBTimeSlot
+from db.tables.tables import (
+    Provider as DBProvider,
+    Appointment as DBAppointment,
+    Patient as DBPatient,
+    TimeSlot as DBTimeSlot,
+)
 from models import Appointment as AppointmentSchema
 
 
@@ -26,11 +31,7 @@ def get_providers(db: Optional[Session] = None) -> List[DBProvider]:
     If a SQLAlchemy session is provided, query the database. Otherwise a
     temporary session will be created and closed.
     """
-    close_after = False
-    if db is None:
-        db = SessionLocal()
-        close_after = True
-
+    db, close_after = _session_scope(db)
     try:
         providers = db.query(DBProvider).all()
         return providers
@@ -46,11 +47,7 @@ def get_provider_by_id(provider_id: str, db: Optional[Session] = None) -> Option
     This will use the provided session if available, otherwise it will
     create a short-lived session.
     """
-    close_after = False
-    if db is None:
-        db = SessionLocal()
-        close_after = True
-
+    db, close_after = _session_scope(db)
     try:
         provider = db.query(DBProvider).filter(DBProvider.id == provider_id).first()
         return provider
@@ -63,16 +60,18 @@ def check_slot_availability(slot_id: str, provider_id: str, db: Optional[Session
     """
     Check if a time slot is available for booking.
     """
-    close_after = False
-    if db is None:
-        db = SessionLocal()
-        close_after = True
-
+    db, close_after = _session_scope(db)
     try:
-        existing = db.query(DBAppointment).filter(
-            DBAppointment.slot_id == slot_id,
-            DBAppointment.provider_id == provider_id
-        ).first()
+        # Consider an appointment non-blocking if it's cancelled.
+        existing = (
+            db.query(DBAppointment)
+            .filter(
+                DBAppointment.slot_id == slot_id,
+                DBAppointment.provider_id == provider_id,
+                DBAppointment.status != "cancelled",
+            )
+            .first()
+        )
         return existing is None
     finally:
         if close_after:
@@ -83,10 +82,7 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
     """
     Create a new appointment in the database.
     """
-    close_after = False
-    if db is None:
-        db = SessionLocal()
-        close_after = True
+    db, close_after = _session_scope(db)
 
     try:
         # Use provided patient details
@@ -136,7 +132,9 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
                 # assumptions. In that case raise an error so the caller
                 # can create the slot within its own transaction.
                 if not close_after:
-                    raise ValueError("Timeslot missing: caller must create or lock the timeslot in its transaction")
+                    raise ValueError(
+                        "Timeslot missing: caller must create or lock the timeslot in its transaction"
+                    )
 
                 # Expect start_time/end_time in ISO format (with or without Z)
                 s = appointment_data.get("start_time")
@@ -260,11 +258,7 @@ def get_booked_slots(provider_id: str, start_date: Union[str, datetime], end_dat
     """
     Get all booked slot IDs for a provider within a date range.
     """
-    close_after = False
-    if db is None:
-        db = SessionLocal()
-        close_after = True
-
+    db, close_after = _session_scope(db)
     try:
         # Accept either date strings (YYYY-MM-DD) or datetime objects.
         try:
@@ -295,4 +289,16 @@ def get_booked_slots(provider_id: str, start_date: Union[str, datetime], end_dat
     finally:
         if close_after:
             db.close()
+
+
+def _session_scope(db: Optional[Session]) -> Tuple[Session, bool]:
+    """
+    Internal helper: return a session and a flag indicating whether the
+    caller is responsible for closing it. This reduces repeated boilerplate.
+    """
+    close_after = False
+    if db is None:
+        db = SessionLocal()
+        close_after = True
+    return db, close_after
 

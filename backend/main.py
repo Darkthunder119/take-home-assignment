@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from db.database import get_db
-from db.tables.tables import Provider as DBProvider
 from db.tables.tables import (
     Appointment as DBAppointment,
     TimeSlot as DBTimeSlot,
@@ -76,6 +75,7 @@ async def get_availability(
     provider_id: str = Query(..., description="Provider ID"),
     start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
     end_date: str = Query(..., description="End date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
 ):
     """
     Get available time slots for a provider within a date range.
@@ -87,8 +87,8 @@ async def get_availability(
     - Skip weekends
     - Only future slots
     """
-    # Validate provider exists
-    provider = get_provider_by_id(provider_id)
+    # Validate provider exists (reuse the request DB session)
+    provider = get_provider_by_id(provider_id, db=db)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
@@ -104,8 +104,8 @@ async def get_availability(
     if end <= start:
         raise HTTPException(status_code=400, detail="end_date must be after start_date")
 
-    # Get booked slots (pass parsed datetimes so we don't re-parse inside helper)
-    booked_slots = get_booked_slots(provider_id, start, end)
+    # Get booked slots (reuse the request DB session)
+    booked_slots = get_booked_slots(provider_id, start, end, db=db)
 
     # Generate time slots
     slots = []
@@ -315,7 +315,7 @@ async def get_provider_appointments(
     - Query database for appointments
     - Return formatted appointment list with patient info
     """
-    provider = get_provider_by_id(provider_id)
+    provider = get_provider_by_id(provider_id, db=db)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
