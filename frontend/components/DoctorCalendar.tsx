@@ -176,45 +176,52 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-semibold">Calendar</h2>
-          <div className="text-sm text-muted-foreground hidden md:block">
-            {format(currentDate, viewMode === "month" ? "MMMM yyyy" : "'Week of' MMM d, yyyy")}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center mb-4">
+        {/* Left: title (centered) */}
+        <div className="md:col-span-1 flex justify-center md:justify-center">
+          <div className="text-center md:text-center">
+            <h2 className="text-xl font-semibold">Calendar</h2>
+            <div className="text-sm text-muted-foreground hidden md:block">{format(currentDate, viewMode === "month" ? "MMMM yyyy" : "'Week of' MMM d, yyyy")}</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* view toggles hidden on small screens */}
-          <button
-            onClick={() => setViewMode("month")}
-            className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "month" ? "bg-primary text-white" : "bg-white border"}`}>
-            Month view
-          </button>
-          <button
-            onClick={() => setViewMode("week")}
-            className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
-            Week view
-          </button>
-          <button
-            onClick={() => setViewMode("day")}
-            className={`hidden md:inline-flex px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-white border"}`}>
-            Day view
-          </button>
-          {/* navigation - keep for mobile and desktop */}
+        {/* Center: navigation controls (centered) */}
+        <div className="md:col-span-1 flex justify-center">
           <div className="flex items-center gap-2">
             <button onClick={goPrev} className="px-2 py-1 rounded border" aria-label="Previous" title={prevTitle}>
               ‹
             </button>
-            <button onClick={goToday} className="px-2 py-1 rounded border" aria-label="Today" title={todayTitle}>
+            <button onClick={goToday} className="px-3 py-1 rounded border" aria-label="Today" title={todayTitle}>
               Today
             </button>
             <button onClick={goNext} className="px-2 py-1 rounded border" aria-label="Next" title={nextTitle}>
               ›
             </button>
           </div>
-          {/* Mobile view toggle for Week / Day */}
-          <div className="flex md:hidden items-center gap-2 ml-2">
+        </div>
+
+        {/* Right: view toggles (centered) */}
+        <div className="md:col-span-1 flex justify-center items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
+            <button
+              onClick={() => setViewMode("month")}
+              className={`px-3 py-1 rounded ${viewMode === "month" ? "bg-primary text-white" : "bg-white border"}`}>
+              Month
+            </button>
+            <button
+              onClick={() => setViewMode("week")}
+              className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>
+              Week
+            </button>
+            <button
+              onClick={() => setViewMode("day")}
+              className={`px-3 py-1 rounded ${viewMode === "day" ? "bg-primary text-white" : "bg-white border"}`}>
+              Day
+            </button>
+          </div>
+
+          {/* Mobile small: compact week/day toggles */}
+          <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setViewMode("week")}
               className={`px-3 py-1 rounded ${viewMode === "week" ? "bg-primary text-white" : "bg-white border"}`}>

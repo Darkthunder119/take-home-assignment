@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
 import { getProviderAppointments, getProviders } from "@/lib/api";
@@ -16,8 +16,11 @@ export default function DoctorSchedulePage({
   params: Promise<{ providerId: string }>;
 }) {
   const { providerId } = use(params);
-  const startDate = format(new Date(), "yyyy-MM-dd");
-  const endDate = format(addDays(new Date(), 30), "yyyy-MM-dd");
+  const [startDate, setStartDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [endDate, setEndDate] = useState(() => format(addDays(new Date(), 30), "yyyy-MM-dd"));
+  // pending inputs (don't refetch until user applies)
+  const [pendingStart, setPendingStart] = useState(startDate);
+  const [pendingEnd, setPendingEnd] = useState(endDate);
 
   const { data: providers } = useQuery({
     queryKey: ["providers"],
@@ -85,6 +88,36 @@ export default function DoctorSchedulePage({
                 <h2 className="text-xl font-semibold">
                   Upcoming Appointments ({appointments.length})
                 </h2>
+              </div>
+
+              {/* Date filter controls (apply button) - responsive across breakpoints */}
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <label className="text-sm text-muted-foreground flex-shrink-0 hidden md:block">From</label>
+                <input
+                  type="date"
+                  value={pendingStart}
+                  onChange={(e) => setPendingStart(e.target.value)}
+                  className="border rounded px-2 py-1 flex-1 min-w-[120px] lg:w-36 text-base md:text-sm"
+                />
+                <label className="text-sm text-muted-foreground flex-shrink-0 hidden md:block">To</label>
+                <input
+                  type="date"
+                  value={pendingEnd}
+                  onChange={(e) => setPendingEnd(e.target.value)}
+                  className="border rounded px-2 py-1 flex-1 min-w-[120px] lg:w-36 text-base md:text-sm"
+                />
+                <button
+                  onClick={() => {
+                    setStartDate(pendingStart);
+                    setEndDate(pendingEnd);
+                  }}
+                  disabled={new Date(pendingEnd) < new Date(pendingStart)}
+                  className={`px-3 py-1 rounded text-sm font-medium flex-shrink-0 ${new Date(pendingEnd) < new Date(pendingStart) ? 'opacity-50 cursor-not-allowed bg-gray-200' : 'bg-primary text-white'}`}>
+                  Apply
+                </button>
+                {new Date(pendingEnd) < new Date(pendingStart) && (
+                  <div className="w-full text-sm text-destructive mt-1">End date must be the same or after start date</div>
+                )}
               </div>
 
               {appointments.length === 0 ? (

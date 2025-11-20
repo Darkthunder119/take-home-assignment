@@ -45,22 +45,23 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
         <CollapsibleTrigger asChild>
           <div className="p-4 cursor-pointer">
             <div className="flex items-start justify-between mb-2">
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <User className="w-5 h-5 text-primary" />
                 </div>
-                <div>
-                  <p className="font-medium">{appointment.patient_name}</p>
+                <div className="min-w-0 overflow-hidden">
+                  <p className="font-medium text-sm md:text-base truncate">{appointment.patient_name}</p>
                   {appointment.patient_email && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
                       <Mail className="w-3 h-3" />
-                      {appointment.patient_email}
+                      <span className="truncate">{appointment.patient_email}</span>
                     </p>
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-0 flex-shrink-0">
                 <Badge
+                  className="whitespace-nowrap"
                   variant={
                     appointment.status === "confirmed" ? "default" : "secondary"
                   }
@@ -76,15 +77,15 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
             </div>
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-              <Clock className="w-4 h-4" />
-              <span>
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              <span className="break-words">
                 {dateStr} • {timeStr}
               </span>
             </div>
 
             <div className="flex items-start gap-2 text-sm">
               <FileText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-              <p className="text-muted-foreground">{appointment.reason}</p>
+              <p className="text-muted-foreground break-words">{appointment.reason}</p>
             </div>
           </div>
         </CollapsibleTrigger>
