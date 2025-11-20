@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <style>
+    .box { fill: #f8fafc; stroke: #0f172a; stroke-width: 1.5; rx: 8; }
+    .box-dark { fill: #0b1220; stroke: #93c5fd; stroke-width: 1.2; rx: 8; }
+    .text { font-family: Inter, Roboto, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; font-size: 14px; fill: #0f172a; }
+    .muted { fill: #475569; font-size: 12px; }
+    .arrow { stroke: #0f172a; stroke-width: 2; fill: none; marker-end: url(#arrowhead); stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="12" markerHeight="9" refX="12" refY="4.5" orient="auto">
+      <polygon points="0 0, 12 4.5, 0 9" fill="#0f172a" />
+    </marker>
+  </defs>
+
+  <!-- User -->
+  <rect x="40" y="30" width="140" height="60" class="box" />
+  <text x="110" y="60" text-anchor="middle" class="text">User (Browser)</text>
+  <text x="110" y="76" text-anchor="middle" class="muted">React / Next.js app</text>
+
+  <!-- Frontend (Vercel) -->
+  <rect x="250" y="20" width="200" height="80" class="box" />
+  <text x="330" y="50" text-anchor="middle" class="text">Next.js Frontend</text>
+  <text x="330" y="66" text-anchor="middle" class="muted">Static &amp; SSR on Vercel</text>
+
+  <!-- Backend -->
+  <rect x="530" y="20" width="220" height="80" class="box" />
+  <text x="640" y="50" text-anchor="middle" class="text">FastAPI Backend</text>
+  <text x="640" y="66" text-anchor="middle" class="muted">Business logic, booking transaction</text>
+
+  <!-- Database (moved under backend) -->
+  <rect x="500" y="180" width="200" height="80" class="box" />
+  <text x="600" y="210" text-anchor="middle" class="text">Postgres DB</text>
+  <text x="600" y="236" text-anchor="middle" class="muted">Neon / Hosted Postgres</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M180 60 L250 60" />
+  <path class="arrow" d="M450 60 L530 60" />
+  <!-- Backend -> DB (vertical, connect to top center of DB) -->
+  <path class="arrow" d="M600 100 L600 180" />
+
+  <!-- Labels on arrows -->
+  <text x="215" y="48" text-anchor="middle" class="muted">HTTP / Fetch</text>
+  <text x="485" y="48" text-anchor="middle" class="muted">API (JSON)</text>
+  <text x="650" y="135" text-anchor="middle" class="muted">SQL / Transactions</text>
+
+  <!-- Small legend -->
+  <rect x="40" y="300" width="820" height="90" fill="#ffffff" stroke="#e2e8f0" rx="6" />
+  <text x="60" y="322" class="text">Legend:</text>
+  <text x="60" y="340" class="muted">- Frontend: Next.js served on Vercel; client calls backend APIs for booking and data.</text>
+  <text x="60" y="356" class="muted">- Backend: FastAPI performs booking inside a DB transaction (FOR UPDATE + unique constraints).</text>
+  <text x="60" y="372" class="muted">- DB: Postgres stores timeslots &amp; appointments; unique indexes prevent double-booking.</text>
+
+</svg>
