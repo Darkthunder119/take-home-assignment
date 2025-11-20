@@ -188,13 +188,13 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
         {/* Center: navigation controls (centered) */}
         <div className="md:col-span-1 flex justify-center">
           <div className="flex items-center gap-2">
-            <button onClick={goPrev} className="px-2 py-1 rounded border" aria-label="Previous" title={prevTitle}>
+            <button onClick={goPrev} className="px-2 py-1 rounded border min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Previous" title={prevTitle}>
               ‹
             </button>
-            <button onClick={goToday} className="px-3 py-1 rounded border" aria-label="Today" title={todayTitle}>
+            <button onClick={goToday} className="px-3 py-1 rounded border min-h-[44px] min-w-[64px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Today" title={todayTitle}>
               Today
             </button>
-            <button onClick={goNext} className="px-2 py-1 rounded border" aria-label="Next" title={nextTitle}>
+            <button onClick={goNext} className="px-2 py-1 rounded border min-h-[44px] min-w-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" aria-label="Next" title={nextTitle}>
               ›
             </button>
           </div>
@@ -298,8 +298,9 @@ export function DoctorCalendar({ providerId, appointments, isLoading, error }: D
                       <button
                         key={apt.id}
                         onClick={() => setOpenAppointment(apt)}
-                        className={`text-left w-full truncate rounded px-1 py-0.5 text-xs ${tagColors[i % tagColors.length]} hover:brightness-95 focus:outline-none`}
-                        title={`${apt.patient_name}: ${apt.reason}`}>
+                        className={`text-left w-full truncate rounded px-2 py-1 text-sm min-h-[44px] ${tagColors[i % tagColors.length]} hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary`}
+                        title={`${apt.patient_name}: ${apt.reason}`}
+                        aria-label={`Appointment for ${apt.patient_name} at ${formatUTCTime(apt.start_time)}: ${apt.reason}`}>
                         {`${formatUTCTime(apt.start_time)} ${apt.patient_name}`}
                       </button>
                     ))}

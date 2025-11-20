@@ -13,6 +13,7 @@ export function ProviderCard({ provider, onSelect, selected }: ProviderCardProps
     <Card
       onClick={() => onSelect(provider)}
       role="button"
+      aria-pressed={!!selected}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onSelect(provider);

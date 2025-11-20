@@ -43,7 +43,12 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card className="group transition-all duration-300 ease-in-out hover:shadow-lg">
         <CollapsibleTrigger asChild>
-          <div className="p-4 cursor-pointer">
+          <button
+            type="button"
+            aria-expanded={isOpen}
+            aria-label={`Appointment with ${appointment.patient_name} on ${dateStr} at ${timeStr}`}
+            className="p-4 cursor-pointer text-left w-full min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-start gap-3 min-w-0 flex-1">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -87,7 +92,7 @@ export function AppointmentCard({ appointment }: AppointmentCardProps) {
               <FileText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
               <p className="text-muted-foreground break-words">{appointment.reason}</p>
             </div>
-          </div>
+          </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="px-4 pb-4 border-t pt-4">

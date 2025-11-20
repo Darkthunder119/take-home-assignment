@@ -30,13 +30,14 @@ export function Header() {
           </Link>
           <nav className="flex items-center gap-2">
             <Button variant="ghost" asChild>
-              <Link href="/" className="flex items-center gap-2">
+              <Link href="/" aria-label="Book appointment" className="flex items-center gap-2">
                 <CalendarCheck className="w-4 h-4" />
                 <span className="hidden sm:inline">Book Appointment</span>
               </Link>
             </Button>
             <Button
               variant="ghost"
+              aria-label={provider ? `Open schedule for ${provider.name}` : 'Open doctor schedule'}
               onClick={() => {
                 if (provider) router.push(doctorHref);
                 else toast.error("Please select a provider to view the schedule");

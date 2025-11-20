@@ -70,6 +70,8 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
             <button
               key={d}
               onClick={() => setSelectedDate(d)}
+              aria-pressed={selectedDate === d}
+              aria-label={`Show times for ${formatUTCDate(slotsByDate[d][0].start_time)}`}
               className={`min-w-[96px] px-4 py-3 rounded-2xl border transition-colors text-left flex items-center justify-center ${
                 selectedDate === d
                   ? 'bg-primary text-white border-primary shadow-md transform translate-y-0'
@@ -93,6 +95,8 @@ export function TimeSlotPicker({ slots, selectedSlot, onSelectSlot, onBook }: Ti
                 key={slot.id}
                 variant={selectedSlot?.id === slot.id ? "default" : "outline"}
                 onClick={() => onSelectSlot(slot)}
+                aria-pressed={selectedSlot?.id === slot.id}
+                aria-label={`Select time ${formatUTCTime(slot.start_time)} on ${formatUTCDateShort(slot.start_time)}`}
                 className={`h-auto py-3 px-4 flex flex-col items-start justify-center gap-1 rounded-xl transition-all ${
                   selectedSlot?.id === slot.id ? "shadow-lg shadow-primary/30" : "hover:border-primary/40"
                 }`}
