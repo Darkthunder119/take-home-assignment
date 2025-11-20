@@ -3,14 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form";
+import FormFieldText from "@/components/ui/form-field-text";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PatientInfo } from "@/lib/api";
@@ -115,54 +109,11 @@ export function BookingForm({ onSubmit, onBack }: BookingFormProps) {
     <Form {...form}>
       <form aria-busy={loading} onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6" aria-label="Booking form">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="first_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="John" autoComplete="given-name" aria-required={true} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="last_name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Doe" autoComplete="family-name" aria-required={true} {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormFieldText control={form.control} name="first_name" label="First Name" placeholder="John" autoComplete="given-name" />
+          <FormFieldText control={form.control} name="last_name" label="Last Name" placeholder="Doe" autoComplete="family-name" />
         </div>
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="john.doe@example.com"
-                  autoComplete="email"
-                  inputMode="email"
-                  aria-required={true}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <FormFieldText control={form.control} name="email" label="Email" placeholder="john.doe@example.com" autoComplete="email" inputMode="email" type="email" />
 
         <FormField
           control={form.control}
