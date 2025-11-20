@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
 from db.database import get_db
 from db.tables.tables import Provider as DBProvider
 from db.tables.tables import (
@@ -152,31 +153,27 @@ async def get_availability(
 
 
 @app.post("/api/appointments", response_model=Appointment, status_code=201)
-async def book_appointment(request: CreateAppointmentRequest):
+async def book_appointment(request: CreateAppointmentRequest, db: Session = Depends(get_db)):
     """
-    Create a new appointment.
+    Create a new appointment while preventing races/double-booking.
 
-    Validates that:
-    - the provider exists
-    - the requested slot is still available
-    - patient information is present and valid
-    - a reason for the visit was supplied
+    This implementation acquires a row-level lock on the referenced
+    `time_slots` row (SELECT ... FOR UPDATE) so concurrent requests must
+    serialize when trying to reserve the same slot. We also mark the
+    slot unavailable in the same transaction before inserting the
+    appointment. A DB-level unique index on `appointments(slot_id)` (or a
+    partial unique index for non-cancelled rows) is recommended as a
+    second line of defense.
     """
-    # Validate provider exists
-    provider = get_provider_by_id(request.provider_id)
+    # Validate provider exists (use the same DB session to keep checks
+    # inside the current transaction where appropriate).
+    provider = get_provider_by_id(request.provider_id, db=db)
     if not provider:
         raise HTTPException(status_code=404, detail="Provider not found")
 
-    # Check slot availability
-    is_available = check_slot_availability(request.slot_id, request.provider_id)
-    if not is_available:
-        raise HTTPException(
-            status_code=409, detail="This time slot has already been booked"
-        )
-
-    # Parse slot ID to get times
+    # Parse slot ID to get times (do this early so we can create a DB row if
+    # the timeslot is missing).
     try:
-        # Extract timestamp from slot_id: "slot-provider-1-1234567890"
         slot_timestamp = int(request.slot_id.split("-")[-1]) / 1000
         start_time = datetime.fromtimestamp(slot_timestamp)
         end_time = start_time + timedelta(minutes=30)
@@ -188,7 +185,6 @@ async def book_appointment(request: CreateAppointmentRequest):
     random_num = str(random.randint(0, 999)).zfill(3)
     reference_number = f"REF-{date_str}-{random_num}"
 
-    # Create appointment data
     appointment_data = {
         "id": f"appointment-{int(datetime.now().timestamp() * 1000)}",
         "reference_number": reference_number,
@@ -205,27 +201,86 @@ async def book_appointment(request: CreateAppointmentRequest):
         "created_at": datetime.now().isoformat() + "Z",
     }
 
-    # Save appointment (creates DB TimeSlot if missing)
+    # Use a row-level lock to prevent concurrent reservations for the same
+    # slot. This makes the reservation check + slot update + appointment
+    # insert occur as part of one serialized transaction.
     try:
-        created = create_appointment(appointment_data)
+        slot_row = (
+            db.execute(
+                select(DBTimeSlot).where(DBTimeSlot.id == request.slot_id).with_for_update()
+            )
+            .scalars()
+            .first()
+        )
+
+        if slot_row:
+            if not slot_row.available:
+                # Someone else already booked this slot
+                raise HTTPException(status_code=409, detail="This time slot has already been booked")
+
+            # Mark slot unavailable in the same transaction
+            slot_row.available = False
+            db.add(slot_row)
+            db.flush()
+        else:
+            # If the timeslot doesn't exist, attempt to create it. Two
+            # concurrent requests can race here: both may see no row and
+            # try to insert. We handle that by catching a DB integrity
+            # error and re-querying the slot with a FOR UPDATE lock.
+            new_slot = DBTimeSlot(
+                id=request.slot_id,
+                provider_id=request.provider_id,
+                start_time=start_time,
+                end_time=end_time,
+                available=False,
+            )
+            db.add(new_slot)
+            try:
+                db.flush()
+                # We successfully created the slot; treat it as the locked row.
+                slot_row = new_slot
+            except IntegrityError:
+                # Another transaction inserted the same timeslot first.
+                # Roll back the failed flush, then re-acquire the slot row
+                # and lock it so we can proceed deterministically.
+                db.rollback()
+                slot_row = (
+                    db.execute(
+                        select(DBTimeSlot).where(DBTimeSlot.id == request.slot_id).with_for_update()
+                    )
+                    .scalars()
+                    .first()
+                )
+                if not slot_row:
+                    # This is unexpected: the insert failed but we still
+                    # can't find the row. Return a server error so the
+                    # client can retry.
+                    raise HTTPException(status_code=500, detail="Failed to reserve timeslot")
+
+        # Insert appointment using the same DB session so everything is
+        # committed atomically. create_appointment will use the provided
+        # session and won't open a new one.
+        created = create_appointment(appointment_data, db=db)
+        db.commit()
     except ValueError as ve:
-        # Missing or invalid start/end times for slot creation
+        db.rollback()
         raise HTTPException(status_code=400, detail=str(ve))
     except IntegrityError as ie:
-        # Database integrity issue (unique constraint, FK, race-condition).
-        # Return 422 so the client knows the request was syntactically
-        # valid but couldn't be processed.
+        # Integrity errors may indicate a concurrent insert; rollback and
+        # return a conflict so clients can retry.
+        db.rollback()
         raise HTTPException(
-            status_code=422,
-            detail="Database integrity error: unable to create appointment",
+            status_code=409, detail="This time slot has already been booked"
         )
-    except Exception as e:
-        # Fallback to 500 for unexpected errors
+    except HTTPException:
+        # Re-raise HTTPExceptions (e.g., 409 above)
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    # `create_appointment` returns a Pydantic `Appointment` model. Build the
-    # response from that model but supply the provider and patient info from
-    # the request/context.
+    # Build the response using the created Pydantic model and context
     return Appointment(
         id=created.id,
         reference_number=created.reference_number,

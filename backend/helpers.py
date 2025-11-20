@@ -108,8 +108,15 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
                 phone=p_phone or ""
             )
             db.add(patient)
-            db.commit()
-            db.refresh(patient)
+            # If we're managing our own session (close_after==True) commit
+            # so the patient receives an id. If a caller provided the
+            # session, just flush so we stay in the same transaction and
+            # avoid intermediate commits that would break atomicity.
+            if close_after:
+                db.commit()
+                db.refresh(patient)
+            else:
+                db.flush()
 
         # Create appointment record.
         # The availability endpoint generates slots in-memory and doesn't
@@ -120,6 +127,17 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
         if slot_id:
             slot = db.query(DBTimeSlot).filter(DBTimeSlot.id == slot_id).first()
             if not slot:
+                # If the helper opened its own session (close_after==True)
+                # we can create a TimeSlot here from the provided start/end
+                # times. However, if the caller provided the session (for
+                # example `book_appointment` which locks/creates the slot
+                # in a transaction) we should not create the slot here as
+                # that would duplicate work and could break transactional
+                # assumptions. In that case raise an error so the caller
+                # can create the slot within its own transaction.
+                if not close_after:
+                    raise ValueError("Timeslot missing: caller must create or lock the timeslot in its transaction")
+
                 # Expect start_time/end_time in ISO format (with or without Z)
                 s = appointment_data.get("start_time")
                 e = appointment_data.get("end_time")
@@ -161,8 +179,14 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
             status=appointment_data.get("status", "scheduled")
         )
         db.add(appt)
-        db.commit()
-        db.refresh(appt)
+        # As above: commit only when we opened the session here. If the
+        # caller provided the session, flush so the insert is sent but the
+        # caller remains responsible for the final commit/rollback.
+        if close_after:
+            db.commit()
+            db.refresh(appt)
+        else:
+            db.flush()
 
         # Build returned payload (keep same shape main.py expects)
         created = {
