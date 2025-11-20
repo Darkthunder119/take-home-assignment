@@ -8,7 +8,8 @@
     "dev:frontend": "pnpm --filter './frontend' dev",
     "dev:backend": "cd backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port $PORT",
     "build": "pnpm --filter './frontend' build",
-    "lint": "pnpm -w -C frontend exec -- next lint"
+    "lint": "pnpm -w -C frontend exec -- next lint",
+    "lint-be": "cd backend && sh ./format_and_lint.sh"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"  
