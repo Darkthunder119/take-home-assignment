@@ -23,6 +23,52 @@ import asyncio
 import httpx
 from datetime import datetime, timedelta
 
+
+def _next_weekday(d: datetime, weekday: int) -> datetime:
+    """
+    Return the next date after `d` that falls on `weekday` (0=Monday).
+    If `d` is already the requested weekday, return the next week's day
+    (i.e. never return `d` itself).
+    """
+    days_ahead = (weekday - d.weekday() + 7) % 7
+    if days_ahead == 0:
+        days_ahead = 7
+    return d + timedelta(days=days_ahead)
+
+
+def parse_weekday(val: str) -> int:
+    """
+    Parse weekday name or number and return 0-6 (0=Monday).
+    """
+    if isinstance(val, int):
+        n = val
+    else:
+        v = val.strip().lower()
+        try:
+            n = int(v)
+        except Exception:
+            n = None
+
+    if isinstance(n, int):
+        if 0 <= n <= 6:
+            return n
+        if 1 <= n <= 7:
+            return n - 1
+        raise ValueError(f"weekday number out of range: {val}")
+
+    names = {
+        "monday": 0, "mon": 0,
+        "tuesday": 1, "tue": 1, "tues": 1,
+        "wednesday": 2, "wed": 2,
+        "thursday": 3, "thu": 3, "thurs": 3,
+        "friday": 4, "fri": 4,
+        "saturday": 5, "sat": 5,
+        "sunday": 6, "sun": 6,
+    }
+    if v in names:
+        return names[v]
+    raise ValueError(f"invalid weekday: {val}")
+
 API_BASE = "http://localhost:8000/api"
 
 async def book(client: httpx.AsyncClient, payload: dict):
@@ -32,11 +78,11 @@ async def book(client: httpx.AsyncClient, payload: dict):
     except Exception as e:
         return e
 
-async def run_once(client: httpx.AsyncClient, provider_id: str, iteration_index: int = 0):
-    # choose slot tomorrow at 10:00 local time and offset by iteration
+async def run_once(client: httpx.AsyncClient, provider_id: str, iteration_index: int = 0, weekday: int = 0):
+    # choose the next Monday at 10:00 local time and offset by iteration
     # so each iteration targets a distinct timeslot (prevents reuse across
     # iterations). We add `iteration_index` minutes to the base time.
-    dt = datetime.now() + timedelta(days=1)
+    dt = _next_weekday(datetime.now(), weekday)
     base_slot = dt.replace(hour=10, minute=0, second=0, microsecond=0)
     # advance by 30 minutes per iteration so each iteration targets a
     # distinct half-hour slot
@@ -61,7 +107,7 @@ async def run_once(client: httpx.AsyncClient, provider_id: str, iteration_index:
     results = await asyncio.gather(*tasks, return_exceptions=True)
     return slot_id, results
 
-async def main(iterations: int = 5):
+async def main(iterations: int = 5, weekday: int = 0):
     async with httpx.AsyncClient() as client:
         # fetch providers
         r = await client.get(f"{API_BASE}/providers")
@@ -78,7 +124,7 @@ async def main(iterations: int = 5):
         other = 0
 
         for i in range(iterations):
-            slot_id, results = await run_once(client, provider_id, i)
+            slot_id, results = await run_once(client, provider_id, i, weekday)
             print(f"\nIteration {i+1} — slot {slot_id}")
             for idx, res in enumerate(results):
                 if isinstance(res, Exception):
@@ -105,5 +151,11 @@ if __name__ == '__main__':
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument('--iter', type=int, default=5, help='Number of iterations')
+    p.add_argument('--weekday', type=str, default='monday', help='Target weekday (name like "monday" or number 0=Monday or 1=Monday)')
     args = p.parse_args()
-    asyncio.run(main(args.iter))
+    try:
+        wd = parse_weekday(args.weekday)
+    except Exception as e:
+        print("Invalid --weekday value:", e)
+        raise SystemExit(2)
+    asyncio.run(main(args.iter, wd))

@@ -33,6 +33,55 @@ import httpx
 
 API_BASE = "http://localhost:8000/api"
 
+
+def _next_weekday(d: datetime, weekday: int) -> datetime:
+    """
+    Return the next date after `d` that falls on `weekday` (0=Monday).
+    If `d` is already the requested weekday, return the next week's day
+    (i.e. never return `d` itself).
+    """
+    days_ahead = (weekday - d.weekday() + 7) % 7
+    if days_ahead == 0:
+        days_ahead = 7
+    return d + timedelta(days=days_ahead)
+
+
+def parse_weekday(val: str) -> int:
+    """
+    Parse a weekday specified as a name (e.g. 'monday' or 'mon') or as a
+    number. Accepts 0-6 (0=Monday) or 1-7 (1=Monday). Returns 0-6.
+    Raises ValueError on bad input.
+    """
+    if isinstance(val, int):
+        n = val
+    else:
+        v = val.strip().lower()
+        # numeric input
+        try:
+            n = int(v)
+        except Exception:
+            n = None
+
+    if isinstance(n, int):
+        if 0 <= n <= 6:
+            return n
+        if 1 <= n <= 7:
+            return n - 1
+        raise ValueError(f"weekday number out of range: {val}")
+
+    names = {
+        "monday": 0, "mon": 0,
+        "tuesday": 1, "tue": 1, "tues": 1,
+        "wednesday": 2, "wed": 2,
+        "thursday": 3, "thu": 3, "thurs": 3,
+        "friday": 4, "fri": 4,
+        "saturday": 5, "sat": 5,
+        "sunday": 6, "sun": 6,
+    }
+    if v in names:
+        return names[v]
+    raise ValueError(f"invalid weekday: {val}")
+
 async def do_post(client: httpx.AsyncClient, payload: dict):
     start = time.monotonic()
     try:
@@ -45,9 +94,9 @@ async def do_post(client: httpx.AsyncClient, payload: dict):
     latency = (time.monotonic() - start) * 1000.0
     return status, body, latency
 
-async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_index: int, concurrency: int):
-    # Build a unique slot for this iteration (base 10:00 2days from now + 30min * i)
-    dt = datetime.now() + timedelta(days=2)
+async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_index: int, concurrency: int, weekday: int):
+    # Build a unique slot for this iteration using the requested weekday at 10:00
+    dt = _next_weekday(datetime.now(), weekday)
     base_slot = dt.replace(hour=10, minute=0, second=0, microsecond=0)
     slot_dt = base_slot + timedelta(minutes=30 * iteration_index)
     ts_ms = int(slot_dt.timestamp() * 1000)
@@ -90,7 +139,7 @@ async def run_iteration(client: httpx.AsyncClient, provider_id: str, iteration_i
         "slot_time": slot_dt.isoformat() + "Z",
     }
 
-async def main(iterations: int = 5, concurrency: int = 10):
+async def main(iterations: int = 5, concurrency: int = 10, weekday: int = 0):
     async with httpx.AsyncClient() as client:
         r = await client.get(f"{API_BASE}/providers")
         r.raise_for_status()
@@ -108,7 +157,7 @@ async def main(iterations: int = 5, concurrency: int = 10):
 
         for i in range(iterations):
             print(f"\nIteration {i+1}/{iterations}")
-            out = await run_iteration(client, provider_id, i, concurrency)
+            out = await run_iteration(client, provider_id, i, concurrency, weekday)
             s = out["success_count"]
             c = out["conflict_count"]
             o = out["other_count"]
@@ -148,6 +197,12 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument('--iter', type=int, default=5, help='Number of iterations (distinct slots)')
     p.add_argument('--concurrency', type=int, default=10, help='Concurrent requests per slot')
+    p.add_argument('--weekday', type=str, default='monday', help='Target weekday (name like "monday" or number 0=Monday or 1=Monday)')
     args = p.parse_args()
-    code = asyncio.run(main(args.iter, args.concurrency))
+    try:
+        wd = parse_weekday(args.weekday)
+    except Exception as e:
+        print("Invalid --weekday value:", e)
+        sys.exit(2)
+    code = asyncio.run(main(args.iter, args.concurrency, wd))
     sys.exit(code)
