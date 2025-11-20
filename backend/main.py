@@ -33,11 +33,10 @@ from helpers import (
 
 app = FastAPI(title="Healthcare Appointment API", version="1.0.0")
 
-# Configure CORS for Next.js frontend
+# Configure CORS for the Next.js frontend.
 app.add_middleware(
     CORSMiddleware,
-    # Allow the common local dev origins. Add more if you serve the frontend
-    # from a different host (127.0.0.1) or port.
+    # Allow common local dev origins. Also allow the deployed Vercel app.
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -157,11 +156,11 @@ async def book_appointment(request: CreateAppointmentRequest):
     """
     Create a new appointment.
 
-    Validates:
-    - Provider exists
-    - Slot is available
-    - Patient information is valid
-    - Reason for visit is provided
+    Validates that:
+    - the provider exists
+    - the requested slot is still available
+    - patient information is present and valid
+    - a reason for the visit was supplied
     """
     # Validate provider exists
     provider = get_provider_by_id(request.provider_id)
@@ -213,9 +212,9 @@ async def book_appointment(request: CreateAppointmentRequest):
         # Missing or invalid start/end times for slot creation
         raise HTTPException(status_code=400, detail=str(ve))
     except IntegrityError as ie:
-        # Database integrity issue (unique constraint, FK, race-condition)
-        # Return 422 Unprocessable Entity so client understands request
-        # was syntactically valid but couldn't be processed.
+        # Database integrity issue (unique constraint, FK, race-condition).
+        # Return 422 so the client knows the request was syntactically
+        # valid but couldn't be processed.
         raise HTTPException(
             status_code=422,
             detail="Database integrity error: unable to create appointment",
@@ -224,8 +223,9 @@ async def book_appointment(request: CreateAppointmentRequest):
         # Fallback to 500 for unexpected errors
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    # `create_appointment` now returns a Pydantic `Appointment` model.
-    # Build the response using that model but override provider & patient
+    # `create_appointment` returns a Pydantic `Appointment` model. Build the
+    # response from that model but supply the provider and patient info from
+    # the request/context.
     return Appointment(
         id=created.id,
         reference_number=created.reference_number,

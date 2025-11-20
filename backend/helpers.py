@@ -111,11 +111,11 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
             db.commit()
             db.refresh(patient)
 
-        # Create appointment record
-        # Ensure the timeslot exists in the DB (the availability endpoint
-        # generates in-memory slots but doesn't persist them). If the slot
-        # row is missing we create it from the provided start/end times so the
-        # appointment FK constraint is satisfied.
+        # Create appointment record.
+        # The availability endpoint generates slots in-memory and doesn't
+        # persist them. If the referenced TimeSlot row doesn't exist we
+        # create a minimal one using the provided start/end times so the
+        # appointment's foreign key constraint can be satisfied.
         slot_id = appointment_data.get("slot_id")
         if slot_id:
             slot = db.query(DBTimeSlot).filter(DBTimeSlot.id == slot_id).first()
@@ -188,7 +188,10 @@ def create_appointment(appointment_data: AppointmentCreateData, db: Optional[Ses
                 created["start_time"] = slot.start_time.isoformat() + "Z"
                 created["end_time"] = slot.end_time.isoformat() + "Z"
 
-        # Validate/normalize via Pydantic Appointment schema and return model
+        # Validate/normalize via the Pydantic Appointment schema and return
+        # the model. If validation fails, fall back to constructing a minimal
+        # AppointmentSchema from the available fields so callers still receive
+        # a typed object.
         try:
             validated = AppointmentSchema.model_validate({
                 "id": created["id"],
